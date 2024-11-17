@@ -5,7 +5,7 @@ def assemble_image(matrix, tile_images):
     Assemble a final image based on a 5x5 matrix and a list of tile images.
     
     Parameters:
-    - matrix: 5x5 matrix with tile indices (values from 0 to 10)
+    - matrix: N x N matrix with tile indices (values from 0 to 10)
     - tile_images: List of images corresponding to tile indices (0 to 10)
     
     Returns:
@@ -21,7 +21,7 @@ def assemble_image(matrix, tile_images):
     # Get the size of one tile (assume all tiles are the same size)
     tile_width, tile_height = tile_images[0].size
     
-    # Create a blank canvas large enough to hold the 5x5 grid
+    # Create a blank canvas large enough to hold the N x N grid
     canvas_width = tile_width * N
     canvas_height = tile_height * N
     final_image = Image.new("RGB", (canvas_width, canvas_height))
