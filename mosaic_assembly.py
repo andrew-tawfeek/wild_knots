@@ -1,3 +1,5 @@
+# Tiles from https://www.geneseo.edu/knotmosaics
+
 from PIL import Image
 
 def assemble_image(matrix, tile_images):
