@@ -1,6 +1,13 @@
 from PIL import Image
 
-def assemble_image(matrix, tile_images):
+
+#instead: input matrix1, matrix2, tileimages
+# then set inner_knot (SINGULAR) to be knot of matrix1, i.e. assemble_image(matrix, tile_images) [optional third input?]
+# then finally do assemble_image(matrix WITH THE X, tile_images) to produce knot with knots
+
+# note how stopping at any finite stage just produces a tame knot by virtue of expanding out fibers at small knots... neat!!!
+
+def assemble_image(matrix, tile_images,inner_knots):
     """
     Assemble a final image based on a 5x5 matrix and a list of tile images.
     
@@ -30,7 +37,10 @@ def assemble_image(matrix, tile_images):
     for row in range(N):
         for col in range(N):
             tile_index = matrix[row][col]
-            tile_image = tile_images[tile_index]
+            if tile_index != 'x':
+                tile_image = tile_images[tile_index]
+            else:
+                tile_image = inner_knots[0]
             # Calculate the position on the canvas
             x_offset = col * tile_width
             y_offset = row * tile_height
@@ -43,20 +53,31 @@ def assemble_image(matrix, tile_images):
 if __name__ == "__main__":
     # Load your tiles (assuming you have 10 images named 'tile0.jpg', 'tile1.jpg', ..., 'tile10.jpg')
     tile_images = [Image.open(f'{i}.png') for i in range(10)]
+    inner_knots = [Image.open(f'inner.png')]
+
+
+
+    # TODO: Want to set up code to provide outer knot with 'x' and inner knot specification...
+
+
+
+
+
+
     
-    # Example 5x5 matrix with tile indices 0 to 10
-    matrix = [[0,  2,  1,  2,  1,  0],
+    # Example N x N matrix with tile indices 0 to 10 and inner knot labeled by 'x'
+    matrix = [[0,  2,  1,  2,  1,  'x'],
                   [2, -1, -1, -1, -1,  1],
                   [3, -1, -1, -1, -1,  4],
                   [0,  3, -1, -1, -1,  1],
                   [0,  0,  3, -1, -1,  4],
-                  [0,  0,  0,  3,  4,  0]]
+                  ['x',  0,  0,  3,  4,  0]]
     
     # Generate the final assembled image
-    assembled_image = assemble_image(matrix, tile_images)
+    assembled_image = assemble_image(matrix, tile_images,inner_knots)
     
     # Show the result
     assembled_image.show()
     
     # Optionally save the result -- COMMENTED OUT UNTIL NEEDED
-    #assembled_image.save('assembled_image.jpg')
+    #assembled_image.save('knot_out.png')
