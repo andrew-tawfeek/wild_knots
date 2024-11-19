@@ -59,6 +59,8 @@ if __name__ == "__main__":
 
     # TODO: Want to set up code to provide outer knot with 'x' and inner knot specification...
 
+    # WANT TO CREATE THE KNOT FROM NOTES (ITERATED TREFOIL!) -- do during moduli of varieties (while also prepping Hartshorne problems...)
+
 
 
 
