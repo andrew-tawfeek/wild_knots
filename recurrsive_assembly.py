@@ -7,7 +7,7 @@ from PIL import Image
 
 # note how stopping at any finite stage just produces a tame knot by virtue of expanding out fibers at small knots... neat!!!
 
-def assemble_image(matrix, tile_images,inner_knots):
+def assemble_image(matrix, tile_images,inner_knots = []):
     """
     Assemble a final image based on a 5x5 matrix and a list of tile images.
     
@@ -52,7 +52,7 @@ def assemble_image(matrix, tile_images,inner_knots):
 # Example usage:
 if __name__ == "__main__":
     # Load your tiles (assuming you have 10 images named 'tile0.jpg', 'tile1.jpg', ..., 'tile10.jpg')
-    tile_images = [Image.open(f'{i}.png') for i in range(10)]
+    tile_images = [Image.open(f'{i}.png') for i in range(11)]
     inner_knots = [Image.open(f'inner.png')]
 
 
@@ -63,17 +63,15 @@ if __name__ == "__main__":
 
 
 
-
-
-
     
     # Example N x N matrix with tile indices 0 to 10 and inner knot labeled by 'x'
-    matrix = [[0,  2,  1,  2,  1,  'x'],
-                  [2, -1, -1, -1, -1,  1],
-                  [3, -1, -1, -1, -1,  4],
-                  [0,  3, -1, -1, -1,  1],
-                  [0,  0,  3, -1, -1,  4],
-                  ['x',  0,  0,  3,  4,  0]]
+    matrix = [[0,0,0,0,0,0,0],
+                  [0,0,0,0,0,0,0],
+                  [0,0,0,2,5,1,0],
+                  [5,1,2,10,1,3,'x'], # Need to resize for 'x' the resize back up, need to incorporate into one function...
+                  [0,3,10,9,4,0,0],
+                  [0,0,3,4,0,0,0],
+                  [0,0,0,0,0,0,0]]
     
     # Generate the final assembled image
     assembled_image = assemble_image(matrix, tile_images,inner_knots)
@@ -82,4 +80,4 @@ if __name__ == "__main__":
     assembled_image.show()
     
     # Optionally save the result -- COMMENTED OUT UNTIL NEEDED
-    #assembled_image.save('knot_out.png')
+    assembled_image.save('inner.png')
