@@ -62,13 +62,13 @@ if __name__ == "__main__":
     # WANT TO CREATE THE KNOT FROM NOTES (ITERATED TREFOIL!) -- do during moduli of varieties (while also prepping Hartshorne problems...)
 
 
-
+    # instead of image file for inner knot, provide a seperate matrix perhaps? but then iteration is difficult...
     
     # Example N x N matrix with tile indices 0 to 10 and inner knot labeled by 'x'
     matrix = [[0,0,0,0,0,0,0],
                   [0,0,0,0,0,0,0],
                   [0,0,0,2,5,1,0],
-                  [5,1,2,10,1,3,'x'], # Need to resize for 'x' the resize back up, need to incorporate into one function...
+                  [5,1,2,10,1,3,0], # Need to resize for 'x' the resize back up, need to incorporate into one function...
                   [0,3,10,9,4,0,0],
                   [0,0,3,4,0,0,0],
                   [0,0,0,0,0,0,0]]
@@ -80,4 +80,4 @@ if __name__ == "__main__":
     assembled_image.show()
     
     # Optionally save the result -- COMMENTED OUT UNTIL NEEDED
-    assembled_image.save('inner.png')
+    #assembled_image.save('inner.png')
