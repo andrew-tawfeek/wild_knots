@@ -105,6 +105,15 @@ m7_41 = [[0,  2,  1,  2,  1,  0,  0],
         [0,  0,  3,  4,  3,  4,  0]]
 
 
+import math
+
+def split(a, n):
+    k, m = divmod(len(a), n)
+    return (a[i*k+min(i, m):(i+1)*k+min(i+1, m)] for i in range(n))
+
+def MosaicMakerMatrix(dataMatrixList):
+    n = int(math.sqrt(len(dataMatrixList)))
+    return list(split(dataMatrixList,n))
 
 def assemble_image(matrix, tile_images):
     """
@@ -161,7 +170,10 @@ if __name__ == "__main__":
     #              [0,  3,  4,  3, -1, -1,  4],
     #              [0,  0,  0,  0,  3,  4,  0]]
 
-    matrix = m6_22
+    #matrix = [[0,2,1,0,0],[2,8,10,1,0],[3,10,9,10,1],[0,3,7,8,4],[0,0,3,4,0]]
+        
+    matrix = MosaicMakerMatrix([0,2,1,0,0,0,2,10,7,1,0,0,3,9,10,7,1,0,0,3,7,10,9,1,
+0,0,3,9,10,4,0,0,0,3,4,0])
 
     # Generate the final assembled image
     assembled_image = assemble_image(matrix, tile_images)
