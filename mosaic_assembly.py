@@ -148,7 +148,7 @@ def assemble_image(matrix, tile_images):
 # Example usage:
 if __name__ == "__main__":
     # Load your tiles (assuming you have 10 images named 'tile0.jpg', 'tile1.jpg', ..., 'tile10.jpg')
-    tile_images = [Image.open(f'{i}.png') for i in range(10)]
+    tile_images = [Image.open(f'{i}.png') for i in range(11)]
     
     # Example 5x5 matrix with tile indices 0 to 10
     # Can also reference one of the above matrix names, e.g. matrix = m6_22
@@ -161,7 +161,7 @@ if __name__ == "__main__":
     #              [0,  3,  4,  3, -1, -1,  4],
     #              [0,  0,  0,  0,  3,  4,  0]]
 
-    matrix = m6_24
+    matrix = m6_22
 
     # Generate the final assembled image
     assembled_image = assemble_image(matrix, tile_images)
