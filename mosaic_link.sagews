@@ -36,3 +36,8 @@ def mark_nines_and_tens(M):
     
     return C
 
+# Input is an n x n matrix populated with 0 - 10 representing tiles
+# Output is a list (length = # crossings) of an oriented knot acceptable by SageMath
+def mosaic_to_link(mosaic):
+    mosaic = add_mod_11(mosaic) #re-indexes entries so no negatives
+    crossing_matrix = mark_nines_and_tens(mosaic)
