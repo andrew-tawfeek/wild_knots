@@ -88,6 +88,7 @@ class Mosaic():
     def zoom(self,amount):
         pass #TODO
 
+def random_mosaic(dimension):
     # This code is embarassing, but if it's stupid and it works it's not stupid.
     # There is a smart way to do this. This is not it. :)
     # For instance, through local connectivity... etc.
