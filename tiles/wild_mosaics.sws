@@ -63,6 +63,10 @@ class Mosaic():
     def matrix(self):
         # Letting W = Mosaic(M) for a matrix M, and doing W.matrix() returns the matrix representation of the mosaic
         return self.matrixRepresentation
+    def isSuitablyConnected(self):
+        pass #TODO
+    def zoom(self,amount):
+        pass #TODO
 
 
 # Example code:
