@@ -51,12 +51,21 @@ class Tile():
         return direction in self.connectionDirections
 
 class Mosaic():
-    def __init__(self,matrix): #matrix object or list of lists representing array? latter?
-        self.size = len(M.rows())
-        self.matrixRepresentation = matrix
+    def __init__(self,mosaic_matrix): #Takes input matrix or list of lists (array)
+        self.matrixRepresentation = matrix(mosaic_matrix)
+        self.size = len(self.matrixRepresentation.rows())
         #attributes/properties of object go here
     def __repr__(self):
         # This representation is announced upon construction. Comment out later, here for testing.
         return f"Created a mosaic of dimension {self.size}."
     def show(self, resolution = 5):
         return graphics_array([[x.show() for x in row] for row in [list(map(Tile,row)) for row in [list(x) for x in self.matrixRepresentation]]]).show(figsize=[resolution, resolution])
+    def matrix(self):
+        # Letting W = Mosaic(M) for a matrix M, and doing W.matrix() returns the matrix representation of the mosaic
+        return self.matrixRepresentation
+
+
+# Example code:
+# M = matrix([[0,2,1,0,0],[2,9,10,1,0],[3,10,9,10,1],[0,3,7,8,4],[0,0,3,4,0]]); W = Mosaic(M);
+# W.matrix() 
+# W.show()
