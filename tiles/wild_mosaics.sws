@@ -76,24 +76,38 @@ class Mosaic():
         M = self.matrixRepresentation
         for i in range(self.size):
             for j in range(self.size):
-                if Tile(M[i][j]).isGoing('up') and not Tile(M[i-1][j]).isGoing('down'):
-                    return False
-                if Tile(M[i][j]).isGoing('left') and not Tile(M[i][j-1]).isGoing('right'):
-                    return False
-                if Tile(M[i][j]).isGoing('right') and not Tile(M[i][j+1]).isGoing('left'):
-                    return False
-                if Tile(M[i][j]).isGoing('down') and not Tile(M[i+1][j]).isGoing('up'):
-                    return False
+                if Tile(M[i][j]).isGoing('up'):
+                    if i == 0:
+                        return False
+                    elif not Tile(M[i-1][j]).isGoing('down'):
+                        return False
+                if Tile(M[i][j]).isGoing('left'):
+                    if j == 0:
+                        return False
+                    elif not Tile(M[i][j-1]).isGoing('right'):
+                        return False
+                if Tile(M[i][j]).isGoing('right'):
+                    if j == self.size-1:
+                        return False
+                    elif not Tile(M[i][j+1]).isGoing('left'):
+                        return False
+                if Tile(M[i][j]).isGoing('down'):
+                    if i == self.size-1:
+                        return False
+                    elif not Tile(M[i+1][j]).isGoing('up'):
+                        return False
         return True
     def zoom(self,amount):
         pass #TODO
 
 def random_mosaic(dimension):
     # This code is embarassing, but if it's stupid and it works it's not stupid.
-    # There is a smart way to do this. This is not it. :)
-    # For instance, through local connectivity... etc.
-    # I'm not doing it. Nope.
-    pass
+    # Honestly, I recommend never using this. Ever.
+    connect_check = False
+    while connect_check == False:
+        M = Mosaic(random_matrix(GF(11),2,2))
+        connect_check = M.isSuitablyConnected()
+    return M
 
 
 # Example code:
