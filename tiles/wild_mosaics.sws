@@ -72,21 +72,17 @@ class Mosaic():
         directions = Tile(M[i][j]).connectionDirections
         return directions
     def isSuitablyConnected(self):
+        # As above, for W = Mosaic(M), doing W.isSuitablyConnected() returns either True/False based on connectivity
         M = self.matrixRepresentation
         for i in range(self.size):
             for j in range(self.size):
-                currentDirections = Tile(M[i][j]).connectionDirections
-                aboveDirections = Tile(M[i-1][j]).connectionDirections
-                belowDirections = Tile(M[i+1][j]).connectionDirections
-                leftDirections = Tile(M[i][j-1]).connectionDirections
-                rightDirections = Tile(M[i][j+1]).connectionDirections
-                if 'up' in currentDirections and 'down' not in aboveDirections:
+                if Tile(M[i][j]).isGoing('up') and not Tile(M[i-1][j]).isGoing('down'):
                     return False
-                if 'left' in currentDirections and 'right' not in leftDirections:
+                if Tile(M[i][j]).isGoing('left') and not Tile(M[i][j-1]).isGoing('right'):
                     return False
-                if 'right' in currentDirections and 'left' not in rightDirections:
+                if Tile(M[i][j]).isGoing('right') and not Tile(M[i][j+1]).isGoing('left'):
                     return False
-                if 'down' in currentDirections and 'up' not in belowDirections:
+                if Tile(M[i][j]).isGoing('down') and not Tile(M[i+1][j]).isGoing('up'):
                     return False
         return True
     def zoom(self,amount):
