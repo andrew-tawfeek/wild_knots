@@ -102,10 +102,10 @@ class Mosaic():
 
 def random_mosaic(dimension):
     # This code is embarassing, but if it's stupid and it works it's not stupid.
-    # Honestly, I recommend never using this. Ever.
+    # For small dimensions though, it doesn't take too too long.
     connect_check = False
     while connect_check == False:
-        M = Mosaic(random_matrix(GF(11),2,2))
+        M = Mosaic(random_matrix(GF(11),dimension,dimension))
         connect_check = M.isSuitablyConnected()
     return M
 
