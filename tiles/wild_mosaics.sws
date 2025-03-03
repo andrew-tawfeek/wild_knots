@@ -88,6 +88,12 @@ class Mosaic():
     def zoom(self,amount):
         pass #TODO
 
+    # This code is embarassing, but if it's stupid and it works it's not stupid.
+    # There is a smart way to do this. This is not it. :)
+    # For instance, through local connectivity... etc.
+    # I'm not doing it. Nope.
+    pass
+
 
 # Example code:
 # M = matrix([[0,2,1,0,0],[2,9,10,1,0],[3,10,9,10,1],[0,3,7,8,4],[0,0,3,4,0]]); W = Mosaic(M);
