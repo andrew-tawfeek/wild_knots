@@ -93,3 +93,6 @@ class Mosaic():
 # M = matrix([[0,2,1,0,0],[2,9,10,1,0],[3,10,9,10,1],[0,3,7,8,4],[0,0,3,4,0]]); W = Mosaic(M);
 # W.matrix() 
 # W.show()
+# W.isSuitablyConnected()
+# M2 = matrix([[0,2,1,0,0],[3,9,10,1,0],[3,10,9,10,1],[0,3,7,8,4],[0,0,3,4,0]]); W2 = Mosaic(M2); W2.show()
+# W2.isSuitablyConnected()
