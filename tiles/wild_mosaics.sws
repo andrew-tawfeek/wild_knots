@@ -5,6 +5,7 @@ class Tile():
         self.tile = N
         if (N == 0):
             self.numConnectionPoints = 0
+            self.connectionDirections = []
         if (N in [1,2,3,4,5,6]):
             self.numConnectionPoints = 2
             if (N==1):
@@ -57,14 +58,37 @@ class Mosaic():
         #attributes/properties of object go here
     def __repr__(self):
         # This representation is announced upon construction. Comment out later, here for testing.
-        return f"Created a mosaic of dimension {self.size}."
+        return f"Mosaic of dimension {self.size}."
     def show(self, resolution = 5):
+        # Letting W = Mosaic(M) for a matrix M then running W.show() outputs a graphic for the mosaic 
         return graphics_array([[x.show() for x in row] for row in [list(map(Tile,row)) for row in [list(x) for x in self.matrixRepresentation]]]).show(figsize=[resolution, resolution])
     def matrix(self):
         # Letting W = Mosaic(M) for a matrix M, and doing W.matrix() returns the matrix representation of the mosaic
         return self.matrixRepresentation
-    def isSuitablyConnected(self):
-        pass #TODO
+    def directions(self,i,j):
+        # Letting W = Mosaic(M) for a matrix M, doing W.directions(i,j) returns the connection points
+        # of the (i,j)th tile, where (0,0) is the tile in the upper-left (matrix notation, indexed at 0)
+        M = self.matrixRepresentation
+        directions = Tile(M[i][j]).connectionDirections
+        return directions
+    def isSuitablyConnected(self): #broken atm
+        M = self.matrixRepresentation
+        for i in range(self.size):
+            for j in range(self.size):
+                currentDirections = Tile(M[i][j]).connectionDirections
+                aboveDirections = Tile(M[i-1][j]).connectionDirections
+                belowDirections = Tile(M[i+1][j]).connectionDirections
+                leftDirections = Tile(M[i][j-1]).connectionDirections
+                rightDirections = Tile(M[i][j+1]).connectionDirections
+                if 'up' in currentDirections and 'down' not in aboveDirections:
+                    return False
+                if 'left' in currentDirections and 'right' not in leftDirections:
+                    return False
+                if 'right' in currentDirections and 'left' not in rightDirections:
+                    return False
+                if 'down' in currentDirections and 'up' not in aboveDirections:
+                    return False
+        return True
     def zoom(self,amount):
         pass #TODO
 
