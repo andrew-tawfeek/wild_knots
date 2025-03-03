@@ -60,7 +60,7 @@ class Mosaic():
         # This representation is announced upon construction. Comment out later, here for testing.
         return f"Mosaic of dimension {self.size}."
     def show(self, resolution = 5):
-        # Letting W = Mosaic(M) for a matrix M then running W.show() outputs a graphic for the mosaic 
+        # Letting W = Mosaic(M) for a matrix M then running W.show() outputs a graphic for the mosaic
         return graphics_array([[x.show() for x in row] for row in [list(map(Tile,row)) for row in [list(x) for x in self.matrixRepresentation]]]).show(figsize=[resolution, resolution])
     def matrix(self):
         # Letting W = Mosaic(M) for a matrix M, and doing W.matrix() returns the matrix representation of the mosaic
@@ -71,7 +71,7 @@ class Mosaic():
         M = self.matrixRepresentation
         directions = Tile(M[i][j]).connectionDirections
         return directions
-    def isSuitablyConnected(self): #broken atm
+    def isSuitablyConnected(self):
         M = self.matrixRepresentation
         for i in range(self.size):
             for j in range(self.size):
@@ -86,7 +86,7 @@ class Mosaic():
                     return False
                 if 'right' in currentDirections and 'left' not in rightDirections:
                     return False
-                if 'down' in currentDirections and 'up' not in aboveDirections:
+                if 'down' in currentDirections and 'up' not in belowDirections:
                     return False
         return True
     def zoom(self,amount):
