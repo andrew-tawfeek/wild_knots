@@ -102,7 +102,7 @@ class Mosaic():
 
 def random_mosaic(dimension):
     # This code is embarassing, but if it's stupid and it works it's not stupid.
-    # For small dimensions though, it doesn't take too too long.
+    # Good luck ever getting this to work for high dimension! Technically, you need luck. Like, a lot of it.
     connect_check = False
     while connect_check == False:
         M = Mosaic(random_matrix(GF(11),dimension,dimension))
