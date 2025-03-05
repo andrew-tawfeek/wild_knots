@@ -1,5 +1,7 @@
 # An implementation of wild mosaic theory into SageMath.
 
+# An implementation of wild mosaic theory into SageMath.
+
 class Tile():
     def __init__(self,N):
         self.tile = N
@@ -50,6 +52,32 @@ class Tile():
         # e.g. Tile(6).isGoing('up') returns True but Tile(6).isGoing('left') returns False
         # This is good for checking suitable connectivity later
         return direction in self.connectionDirections
+    def zoom(self):
+        # Every tile becomes 3x3 matrix
+        # TODO: Later, iterate this with an input "amount"
+        N = self.tile
+        if (N==0):
+            return [[0,0,0],[0,0,0],[0,0,0]]
+        if (N==1):
+            return [[0,0,0],[5,1,0],[0,6,0]]
+        if (N==2):
+            return [[0,0,0],[0,2,5],[0,6,0]]
+        if (N==3):
+            return [[0,6,0],[0,3,5],[0,0,0]]
+        if (N==4):
+            return [[0,6,0],[5,4,0],[0,0,0]]
+        if (N==5):
+            return [[0,0,0],[5,5,5],[0,0,0]]
+        if (N==6):
+            return [[0,6,0],[0,6,0],[0,6,0]]
+        if (N==7):
+            return [[0,3,1],[1,0,3],[3,1,0]]
+        if (N==8):
+            return [[2,4,0],[4,0,2],[0,2,4]]
+        if (N==9):
+            return [[0,6,0],[5,9,5],[0,6,0]]
+        if (N==10):
+            return [[0,6,0],[5,10,5],[0,6,0]]
 
 class Mosaic():
     def __init__(self,mosaic_matrix): #Takes input matrix or list of lists (array)
@@ -98,7 +126,7 @@ class Mosaic():
                         return False
         return True
     def zoom(self,amount):
-        pass #TODO
+        pass #TODO [[Tile(x).zoom() for x in row] for row in [list(x) for x in list(M)]]
 
 def random_mosaic(dimension):
     # This code is embarassing, but if it's stupid and it works it's not stupid.
@@ -108,6 +136,15 @@ def random_mosaic(dimension):
         M = Mosaic(random_matrix(GF(11),dimension,dimension))
         connect_check = M.isSuitablyConnected()
     return M
+
+
+# Example code:
+# M = matrix([[0,2,1,0,0],[2,9,10,1,0],[3,10,9,10,1],[0,3,7,8,4],[0,0,3,4,0]]); W = Mosaic(M);
+# W.matrix() 
+# W.show()
+# W.isSuitablyConnected()
+# M2 = matrix([[0,2,1,0,0],[3,9,10,1,0],[3,10,9,10,1],[0,3,7,8,4],[0,0,3,4,0]]); W2 = Mosaic(M2); W2.show()
+# W2.isSuitablyConnected()
 
 
 # Example code:
