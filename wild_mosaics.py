@@ -1,7 +1,5 @@
 # An implementation of wild mosaic theory into SageMath.
 
-# An implementation of wild mosaic theory into SageMath.
-
 class Tile():
     def __init__(self,N):
         self.tile = N
@@ -125,8 +123,21 @@ class Mosaic():
                     elif not Tile(M[i+1][j]).isGoing('up'):
                         return False
         return True
-    def zoom(self,amount):
-        pass #TODO [[Tile(x).zoom() for x in row] for row in [list(x) for x in list(M)]]
+    def zoom(self):
+        # Zooms by 3x, replaces each tile by a 3x3 isotopy equivalent tile
+        # Usage is W.zoom() fro W = Mosaic(M)
+        M = self.matrixRepresentation
+        M_tensored = [[Tile(x).zoom() for x in row] for row in [list(x) for x in list(M)]]
+        A = [] # The below code unwraps inner 3x3 subtiles
+        for n in range(len(M_tensored)*3):
+            A = A + [[x[n%3] for x in M_tensored[floor(n/3)]]] #Euclidean division, n = floor(n/3)*3 + n%3
+        B = [] # The below code unwraps inner 1x3 subtiles
+        for row in A:
+            tupe = []
+            for tuple in row:
+                tupe = tupe + tuple
+            B = B + [tupe]
+        return Mosaic(B)
 
 def random_mosaic(dimension):
     # This code is embarassing, but if it's stupid and it works it's not stupid.
@@ -136,15 +147,6 @@ def random_mosaic(dimension):
         M = Mosaic(random_matrix(GF(11),dimension,dimension))
         connect_check = M.isSuitablyConnected()
     return M
-
-
-# Example code:
-# M = matrix([[0,2,1,0,0],[2,9,10,1,0],[3,10,9,10,1],[0,3,7,8,4],[0,0,3,4,0]]); W = Mosaic(M);
-# W.matrix() 
-# W.show()
-# W.isSuitablyConnected()
-# M2 = matrix([[0,2,1,0,0],[3,9,10,1,0],[3,10,9,10,1],[0,3,7,8,4],[0,0,3,4,0]]); W2 = Mosaic(M2); W2.show()
-# W2.isSuitablyConnected()
 
 
 # Example code:
