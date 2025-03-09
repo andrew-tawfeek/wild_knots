@@ -143,6 +143,18 @@ class Mosaic():
                 tupe = tupe + tuple
             B = B + [tupe]
         return Mosaic(B)
+    def findCrossings(self):
+        # Returns a list of the coordinates (i,j) in the matrix of crossings, i.e. 9/10 tiles
+        M = self.matrixRepresentation
+        n = self.size
+        M_rows = [list(x) for x in M.rows()]
+        crossing_coord = []
+        for i in range(n):
+            row_crossings = [j for j, x in enumerate(M_rows[i]) if x == 9 or x == 10]
+            crossing_coord += [(i,j) for j in row_crossings]
+        return crossing_coord
+    def numCrossings(self):
+        return len(self.findCrossings())
 
 def random_mosaic(dimension):
     # This code is embarassing, but if it's stupid and it works it's not stupid.
