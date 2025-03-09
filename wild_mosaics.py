@@ -3,6 +3,7 @@
 class Tile():
     def __init__(self,N):
         self.tile = N
+        self.orientation = []
         if (N == 0):
             self.numConnectionPoints = 0
             self.connectionDirections = []
@@ -76,6 +77,10 @@ class Tile():
             return [[0,6,0],[5,9,5],[0,6,0]]
         if (N==10):
             return [[0,6,0],[5,10,5],[0,6,0]]
+    def orient(self, direction):
+        # Assigns an orientation to a tile
+        assert direction in self.connectionDirections #returns error if orientation not possible
+        self.orientation = self.orientation + [direction]
 
 class Mosaic():
     def __init__(self,mosaic_matrix): #Takes input matrix or list of lists (array)
