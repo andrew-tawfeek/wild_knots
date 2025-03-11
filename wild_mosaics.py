@@ -155,6 +155,12 @@ class Mosaic():
         return crossing_coord
     def numCrossings(self):
         return len(self.findCrossings())
+    def walker(self,i,j):
+        # Tells you the direction... Need old/current pos?
+        M = self.matrixRepresentation
+        assert M[i][j] != 0 # Prevents standing in the void/not on a strand
+        directions = Tile(M[i][j]).connectionDirections # non-empty because not tile 0
+        pass # TODO
 
 def random_mosaic(dimension):
     # This code is embarassing, but if it's stupid and it works it's not stupid.
