@@ -1,4 +1,4 @@
-# An implementation of wild mosaic theory into SageMath.
+# An implementation of wild mosaic theory into SageMath
 
 class Tile():
     def __init__(self,N):
