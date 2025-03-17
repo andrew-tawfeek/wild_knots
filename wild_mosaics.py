@@ -171,12 +171,14 @@ class Mosaic():
         return possible_coords
         
     
-    def walk(self, crossing, direction):
+    def walk(self, crossing, direction, pathList = False):
+        #assert #NEED TO ENSURE NO HYPERBOLIC TILES
         # Given a crossing and direction (up/down/left/right), returns crossing reached and orientation demanded
+        # W.walk(W.walk(crossing, direction)[0],W.walk(crossing, direction)[1]) #is actually just the identity, returns crossing, direction, as expected
         all_crossings = self.findCrossings() # list of crossings (i,j)
         assert crossing in all_crossings # error prevention
         M = self.matrixRepresentation
-        (pos_x, pos_y) = crossing
+        (pos_x, pos_y) = crossing # CAREFUL: pos_x, pos_y are row, col -- not Cartesian coords!
         (prev_x, prev_y) = crossing
         # Start at the indicated crossing tile (i,j), goes direction
         
@@ -189,14 +191,33 @@ class Mosaic():
         if direction == 'right':
             pos_y += 1
 
+        path = [(prev_x, prev_y), (pos_x, pos_y)]
         # Continue walking until reaching another crossing
         while len(Tile(M[pos_x][pos_y]).connectionDirections) == 2: # If it's a two way street, keep going
             accessible_coords = self.shift(pos_x,pos_y)
             accessible_coords.remove((prev_x, prev_y)) # only one possibility after this
             (prev_x, prev_y) = (pos_x, pos_y)
             (pos_x, pos_y) = accessible_coords[0]
+            path += [(pos_x, pos_y)]
 
-        return (pos_x, pos_y)
+        if prev_x < pos_x: # i.e. entered from higher tile
+            incidence = 'up'
+        if prev_x > pos_x:
+            incidence = 'down'
+        if prev_y < pos_y:
+            incidence = 'left'
+        if prev_y > pos_y:
+            incidence = 'right'
+        
+        if pathList == True:
+            return path
+        else:
+            return (pos_x, pos_y), incidence
+
+    def arcList(self):
+        # run walk on each crossing and with condition pathList = True
+        # remove duplicates in nice manner
+        pass
             
         # TODO: create graph based on crossing! each vertex should have degree 4, i.e. 4-regular!
         # This is a singular knot representation, nearly, but orientations indicate knot
@@ -217,5 +238,5 @@ def random_mosaic(dimension):
 # W.matrix() 
 # W.show()
 # W.isSuitablyConnected()
-# M2 = matrix([[0,2,1,0,0],[3,9,10,1,0],[3,10,9,10,1],[0,3,7,8,4],[0,0,3,4,0]]); W2 = Mosaic(M2); W2.show()
-# W2.isSuitablyConnected()
+# W = Mosaic(M).zoom()
+# W.walk((4,7), 'right', True) # Putting 'True' provides the pathing
