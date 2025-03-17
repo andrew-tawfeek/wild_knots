@@ -1,4 +1,4 @@
-# An implementation of wild mosaic theory into SageMath
+# An implementation of wild mosaic theory into SageMath.
 
 class Tile():
     def __init__(self,N):
@@ -155,13 +155,53 @@ class Mosaic():
         return crossing_coord
     def numCrossings(self):
         return len(self.findCrossings())
-    def walker(self,i,j):
-        # Tells you the direction... Need old/current pos?
+    def shift(self,i,j):
+        assert self.isSuitablyConnected() == True # prevents indexing issues
         M = self.matrixRepresentation
-        assert M[i][j] != 0 # Prevents standing in the void/not on a strand
-        directions = Tile(M[i][j]).connectionDirections # non-empty because not tile 0
-        pass # TODO
+        directions = Tile(M[i][j]).connectionDirections
+        possible_coords = []
+        if 'up' in directions:
+            possible_coords += [(i-1,j)]
+        if 'down' in directions:
+            possible_coords += [(i+1,j)]
+        if 'left' in directions:
+            possible_coords += [(i,j-1)]
+        if 'right' in directions:
+            possible_coords += [(i,j+1)]
+        return possible_coords
+        
+    
+    def walk(self, crossing, direction):
+        # Given a crossing and direction (up/down/left/right), returns crossing reached and orientation demanded
+        all_crossings = self.findCrossings() # list of crossings (i,j)
+        assert crossing in all_crossings # error prevention
+        M = self.matrixRepresentation
+        (pos_x, pos_y) = crossing
+        (prev_x, prev_y) = crossing
+        # Start at the indicated crossing tile (i,j), goes direction
+        
+        if direction == 'up':
+            pos_x -= 1
+        if direction == 'down':
+            pos_x += 1
+        if direction == 'left':
+            pos_y -= 1
+        if direction == 'right':
+            pos_y += 1
 
+        # Continue walking until reaching another crossing
+        while len(Tile(M[pos_x][pos_y]).connectionDirections) == 2: # If it's a two way street, keep going
+            accessible_coords = self.shift(pos_x,pos_y)
+            accessible_coords.remove((prev_x, prev_y)) # only one possibility after this
+            (prev_x, prev_y) = (pos_x, pos_y)
+            (pos_x, pos_y) = accessible_coords[0]
+
+        return (pos_x, pos_y)
+            
+        # TODO: create graph based on crossing! each vertex should have degree 4, i.e. 4-regular!
+        # This is a singular knot representation, nearly, but orientations indicate knot
+        # Perhaps for  fun output a directed graph of this sort for visualization.
+        
 def random_mosaic(dimension):
     # This code is embarassing, but if it's stupid and it works it's not stupid.
     # Good luck ever getting this to work for high dimension! Technically, you need luck. Like, a lot of it.
