@@ -215,7 +215,6 @@ class Mosaic():
             return (pos_x, pos_y), opposite(incidence)
         else:
             return (pos_x, pos_y), incidence
-
     def arcList(self):
         # run walk on each crossing and with condition pathList = True
         # remove duplicates in nice manner
@@ -224,6 +223,32 @@ class Mosaic():
         # TODO: create graph based on crossing! each vertex should have degree 4, i.e. 4-regular!
         # This is a singular knot representation, nearly, but orientations indicate knot
         # Perhaps for  fun output a directed graph of this sort for visualization.
+
+    def strandOf(self, crossing, direction = 'up'):
+        # Returns strand of a single provided crossing.
+        # Orientation at crossign defaults to 'up' unless otherwise indicated.
+        crossings = self.findCrossings()
+        assert crossing in crossings
+        
+        initial = crossing
+        strandPath = self.walk(initial, direction, pathList = True)
+        position, direction = self.walk(initial, direction, tangent = True)
+
+        while position != initial:
+            strandPath += self.walk(position, direction, pathList = True)[1:] # drops off repeated start (time = 0)
+            position, direction = self.walk(position, direction, tangent = True)
+
+        return strandPath
+
+    def strands(self):
+            # Returns all strands.
+            crossings = self.findCrossings()
+            pass #TOOD.
+        
+        # check missed crossings after... for x in all_crossings, if x not in strand_list... add to list corresp. to new knot
+        # WARNING: does this tell you when two knots are linked? what does this do for hopf?
+        # Perhaps could be used primarily for orienting, i.e. Sage Links compatibility
+    
         
 def random_mosaic(dimension):
     # This code is embarassing, but if it's stupid and it works it's not stupid.
