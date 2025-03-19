@@ -275,5 +275,11 @@ def opposite(direction):
 # W.matrix() 
 # W.show()
 # W.isSuitablyConnected()
+
 # W = Mosaic(M).zoom()
-# W.walk((4,7), 'right', True) # Putting 'True' provides the pathing
+# W.walk((4,7), 'right', pathList = True) # Putting 'True' provides the pathing
+
+# hopf = Mosaic([[0,2,1,0],[2,9,10,1],[3,10,10,4],[0,3,4,0]]); hopfBig = hopf.zoom(); hopfBig.show(10)
+# hopfBig.strandOf((4,4),'up')
+# hopfBig.strandOf((4,4),'left')
+# These are two different strands (knots) in the hopf! Going left/going right at the crossing determines what was taken.
