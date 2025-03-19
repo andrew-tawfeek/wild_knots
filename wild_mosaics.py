@@ -238,7 +238,7 @@ class Mosaic():
             strandPath += self.walk(position, direction, pathList = True)[1:] # drops off repeated start (time = 0)
             position, direction = self.walk(position, direction, tangent = True)
 
-        return strandPath
+        return strandPath#[:-1] # Use this to remove duplicate starting/ending position
 
     def strands(self):
             # Returns all strands.
