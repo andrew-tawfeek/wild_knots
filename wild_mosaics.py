@@ -171,7 +171,7 @@ class Mosaic():
         return possible_coords
         
     
-    def walk(self, crossing, direction, pathList = False):
+    def walk(self, crossing, direction, pathList = False, tangent = False):
         #assert #NEED TO ENSURE NO HYPERBOLIC TILES
         # Given a crossing and direction (up/down/left/right), returns crossing reached and orientation demanded
         # W.walk(W.walk(crossing, direction)[0],W.walk(crossing, direction)[1]) #is actually just the identity, returns crossing, direction, as expected
@@ -211,6 +211,8 @@ class Mosaic():
         
         if pathList == True:
             return path
+        elif tangent == True:
+            return (pos_x, pos_y), opposite(incidence)
         else:
             return (pos_x, pos_y), incidence
 
@@ -232,6 +234,16 @@ def random_mosaic(dimension):
         connect_check = M.isSuitablyConnected()
     return M
 
+def opposite(direction):
+    assert direction in ['up','down','left','right']
+    if direction == 'up':
+        return 'down'
+    if direction == 'down':
+        return 'up'
+    if direction == 'left':
+        return 'right'
+    if direction == 'right':
+        return 'left'
 
 # Example code:
 # M = matrix([[0,2,1,0,0],[2,9,10,1,0],[3,10,9,10,1],[0,3,7,8,4],[0,0,3,4,0]]); W = Mosaic(M);
