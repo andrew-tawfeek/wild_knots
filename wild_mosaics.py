@@ -224,7 +224,7 @@ class Mosaic():
         # This is a singular knot representation, nearly, but orientations indicate knot
         # Perhaps for  fun output a directed graph of this sort for visualization.
 
-    def strandOf(self, crossing, direction = 'up'):
+    def strandOf(self, crossing, direction = 'up'): #TODO: NEEDS FIX
         # Returns strand of a single provided crossing.
         # Orientation at crossign defaults to 'up' unless otherwise indicated.
         crossings = self.findCrossings()
@@ -234,15 +234,17 @@ class Mosaic():
         strandPath = self.walk(initial, direction, pathList = True)
         position, direction = self.walk(initial, direction, tangent = True)
 
-        while position != initial:
+        while position != initial: # TODO: INITIAL POSITION VISITED ONCE FOR LINK TWICE FOR KNOT, THIS WHILE CONDITION MUST BE ALERTED
             strandPath += self.walk(position, direction, pathList = True)[1:] # drops off repeated start (time = 0)
             position, direction = self.walk(position, direction, tangent = True)
 
-        return strandPath#[:-1] # Use this to remove duplicate starting/ending position
+        return strandPath[:-1] # Used to remove duplicate starting/ending position
 
     def strands(self):
         # Returns all strands.
         crossings = self.findCrossings() #every crossing should visited twice...
+        
+        
         pass #TOOD.
         
         # check missed crossings after... for x in all_crossings, if x not in strand_list... add to list corresp. to new knot
