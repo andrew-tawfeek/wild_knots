@@ -241,14 +241,18 @@ class Mosaic():
         return strandPath#[:-1] # Use this to remove duplicate starting/ending position
 
     def strands(self):
-            # Returns all strands.
-            crossings = self.findCrossings()
-            pass #TOOD.
+        # Returns all strands.
+        crossings = self.findCrossings() #every crossing should visited twice...
+        pass #TOOD.
         
         # check missed crossings after... for x in all_crossings, if x not in strand_list... add to list corresp. to new knot
         # WARNING: does this tell you when two knots are linked? what does this do for hopf?
         # Perhaps could be used primarily for orienting, i.e. Sage Links compatibility
-    
+
+    def planarDiagramCode(self):
+        #TODO: This output is what's needed for compatibility with Links package in Sage
+        # https://doc.sagemath.org/html/en/reference/knots/sage/knots/link.html
+        pass
         
 def random_mosaic(dimension):
     # This code is embarassing, but if it's stupid and it works it's not stupid.
@@ -283,3 +287,6 @@ def opposite(direction):
 # hopfBig.strandOf((4,4),'up')
 # hopfBig.strandOf((4,4),'left')
 # These are two different strands (knots) in the hopf! Going left/going right at the crossing determines what was taken.
+
+# [x for x in hopfBig.findCrossings() if not x in hopfBig.strandOf((4,4),'left')] == [] # All crossings of link occur along knot strand, but not all strand tiles are here
+# [x for x in hopfBig.strandOf((4,4),'left') if x not in hopfBig.strandOf((4,4),'up')] != [] # Indicates more than one connected component (if this holds true at any crossing of a mosaic)
