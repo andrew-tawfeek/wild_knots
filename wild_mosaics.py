@@ -238,20 +238,19 @@ class Mosaic():
         assert crossing in crossings
         
         initial = crossing
+        initial_direction = direction
         strandPath = self.walk(initial, direction, pathList = True)
         position, direction = self.walk(initial, direction, tangent = True)
 
         while position != initial: # TODO: INITIAL POSITION VISITED ONCE FOR LINK TWICE FOR KNOT, THIS WHILE CONDITION MUST BE ALERTED
             strandPath += self.walk(position, direction, pathList = True)[1:] # drops off repeated start (time = 0)
-            prev_position = position
             position, direction = self.walk(position, direction, tangent = True)
-            if position == initial:
-                # This prevent stopping the while loop if initial crossing approached orthogonally
-                if prev_position != self.walk(initial, opposite(direction))[0]: # Checks if previous position was not parallel direction (i.e. orthogonal)
-                    # If it was orthogonal, then continue the while loop, so this continues to next step
+            if position == initial:  # This prevent stopping the while loop if initial crossing approached orthogonally
+                if strandPath[-2] != self.shift(initial[0],initial[1],dictionary = True)[opposite(initial_direction)]:
                     strandPath += self.walk(position, direction, pathList = True)[1:] # drops off repeated start (time = 0)
                     position, direction = self.walk(position, direction, tangent = True)
-        return strandPath[:-1] # Used to remove duplicate starting/ending position
+                else:
+                    return strandPath[:-1] # Used to remove duplicate starting/ending position
 
     def strands(self):
         # Returns all strands.
@@ -304,3 +303,7 @@ def opposite(direction):
 # These are two different strands (knots) in the hopf! Going left/going right at the crossing determines what was taken.
 
 #hopfBig.shift(3,4, dictionary = True) # Returns directions of tiles *connected too*
+
+# W = Mosaic([(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0),(0, 0, 0, 0, 2, 5, 5, 1, 0, 0, 0, 0, 0, 0, 0),(0, 0, 0, 0, 6, 0, 0, 6, 0, 0, 0, 0, 0, 0, 0),(0, 0, 0, 0, 6, 0, 0, 6, 0, 0, 0, 0, 0, 0, 0),(0, 2, 5, 5, 9, 5, 5, 10, 5, 5, 1, 0, 0, 0, 0),(0, 6, 0, 0, 6, 0, 0, 6, 0, 0, 6, 0, 0, 0, 0),(0, 6, 0, 0, 6, 0, 0, 3, 1, 0, 6, 0, 0, 0, 0),(0, 3, 5, 5, 10, 5, 1, 0, 3, 5, 10, 5, 5, 1, 0),(0, 0, 0, 0, 6, 0, 3, 1, 0, 0, 6, 0, 0, 6, 0),(0, 0, 0, 0, 6, 0, 0, 6, 0, 2, 4, 0, 0, 6, 0),(0, 0, 0, 0, 3, 5, 5, 10, 5, 4, 0, 2, 5, 4, 0),(0, 0, 0, 0, 0, 0, 0, 6, 0, 0, 2, 4, 0, 0, 0),(0, 0, 0, 0, 0, 0, 0, 6, 0, 0, 6, 0, 0, 0, 0),(0, 0, 0, 0, 0, 0, 0, 3, 5, 5, 4, 0, 0, 0, 0),(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)])
+# W.strandOf((4,4), direction = 'right').count((4,4)) == 2
+# This indicates the crossing was visited twice in the walk. Orthogonality check is done in the code during second pass-through.
