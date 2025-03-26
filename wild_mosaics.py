@@ -155,20 +155,27 @@ class Mosaic():
         return crossing_coord
     def numCrossings(self):
         return len(self.findCrossings())
-    def shift(self,i,j):
+        
+    def shift(self,i,j, dictionary = False):
+        # Setting 'dictionary = True' allows a dictionary return of tile directions
         assert self.isSuitablyConnected() == True # prevents indexing issues
         M = self.matrixRepresentation
         directions = Tile(M[i][j]).connectionDirections
-        possible_coords = []
+        directions_dict = dict()
+        
         if 'up' in directions:
-            possible_coords += [(i-1,j)]
+            directions_dict['up'] = (i-1,j)
         if 'down' in directions:
-            possible_coords += [(i+1,j)]
+            directions_dict['down'] = (i+1,j)
         if 'left' in directions:
-            possible_coords += [(i,j-1)]
+            directions_dict['left'] = (i,j-1)
         if 'right' in directions:
-            possible_coords += [(i,j+1)]
-        return possible_coords
+            directions_dict['right'] = (i,j+1)
+
+        if dictionary == True:
+            return directions_dict
+        else:
+            return list(directions_dict.values())
         
     
     def walk(self, crossing, direction, pathList = False, tangent = False):
@@ -236,8 +243,14 @@ class Mosaic():
 
         while position != initial: # TODO: INITIAL POSITION VISITED ONCE FOR LINK TWICE FOR KNOT, THIS WHILE CONDITION MUST BE ALERTED
             strandPath += self.walk(position, direction, pathList = True)[1:] # drops off repeated start (time = 0)
+            prev_position = position
             position, direction = self.walk(position, direction, tangent = True)
-
+            if position == initial:
+                # This prevent stopping the while loop if initial crossing approached orthogonally
+                if prev_position != self.walk(initial, opposite(direction))[0]: # Checks if previous position was not parallel direction (i.e. orthogonal)
+                    # If it was orthogonal, then continue the while loop, so this continues to next step
+                    strandPath += self.walk(position, direction, pathList = True)[1:] # drops off repeated start (time = 0)
+                    position, direction = self.walk(position, direction, tangent = True)
         return strandPath[:-1] # Used to remove duplicate starting/ending position
 
     def strands(self):
@@ -290,5 +303,4 @@ def opposite(direction):
 # hopfBig.strandOf((4,4),'left')
 # These are two different strands (knots) in the hopf! Going left/going right at the crossing determines what was taken.
 
-# [x for x in hopfBig.findCrossings() if not x in hopfBig.strandOf((4,4),'left')] == [] # All crossings of link occur along knot strand, but not all strand tiles are here
-# [x for x in hopfBig.strandOf((4,4),'left') if x not in hopfBig.strandOf((4,4),'up')] != [] # Indicates more than one connected component (if this holds true at any crossing of a mosaic)
+#hopfBig.shift(3,4, dictionary = True) # Returns directions of tiles *connected too*
