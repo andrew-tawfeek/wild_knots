@@ -231,7 +231,7 @@ class Mosaic():
         # This is a singular knot representation, nearly, but orientations indicate knot
         # Perhaps for  fun output a directed graph of this sort for visualization.
 
-    def strandOf(self, crossing, direction = 'up'): #TODO: NEEDS FIX
+    def strandOf(self, crossing, direction = 'up'):
         # Returns strand of a single provided crossing.
         # Orientation at crossign defaults to 'up' unless otherwise indicated.
         crossings = self.findCrossings()
@@ -252,8 +252,12 @@ class Mosaic():
                 else:
                     return strandPath[:-1] # Used to remove duplicate starting/ending position
 
+    def localFrames(self):
+        # Returns the tile above/below (as a pair) each crossing in the mosaic
+        return [(self.shift(crossing[0],crossing[1],True)['up'], self.shift(crossing[0],crossing[1],True)['right']) for crossing in self.findCrossings()] 
+    
     def strands(self):
-        # Returns all strands.
+        # Returns all strands (applies only when multiple connected components).
         crossings = self.findCrossings() #every crossing should visited twice...
         
         
@@ -288,6 +292,16 @@ def opposite(direction):
     if direction == 'right':
         return 'left'
 
+#class mosaics():
+#    def __init__(self):
+        # Refer to graphs Sage package...
+        # https://www.geneseo.edu/knotmosaics/knot-table
+        # https://github.com/andrew-tawfeek/knot-mosaics/blob/master/README.md
+        # https://github.com/amheap/knot-mosaics/blob/master/pythonFiles/draw_knots.py
+
+###############################
+
+        
 # Example code:
 # M = matrix([[0,2,1,0,0],[2,9,10,1,0],[3,10,9,10,1],[0,3,7,8,4],[0,0,3,4,0]]); W = Mosaic(M);
 # W.matrix() 
