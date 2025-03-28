@@ -242,12 +242,12 @@ class Mosaic():
         strandPath = self.walk(initial, direction, pathList = True)
         position, direction = self.walk(initial, direction, tangent = True)
 
-        while position != initial: # TODO: INITIAL POSITION VISITED ONCE FOR LINK TWICE FOR KNOT, THIS WHILE CONDITION MUST BE ALERTED
-            strandPath += self.walk(position, direction, pathList = True)[1:] # drops off repeated start (time = 0)
+        while position != initial: 
+            strandPath += self.walk(position, direction, pathList = True)[1:] # Drops off repeated start (time = 0)
             position, direction = self.walk(position, direction, tangent = True)
             if position == initial:  # This prevent stopping the while loop if initial crossing approached orthogonally
                 if strandPath[-2] != self.shift(initial[0],initial[1],dictionary = True)[opposite(initial_direction)]:
-                    strandPath += self.walk(position, direction, pathList = True)[1:] # drops off repeated start (time = 0)
+                    strandPath += self.walk(position, direction, pathList = True)[1:]
                     position, direction = self.walk(position, direction, tangent = True)
                 else:
                     return strandPath[:-1] # Used to remove duplicate starting/ending position
