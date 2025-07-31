@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Mini Representation</title>
+</head>
+<body>
+    <h1>Testing Mini Representation Functionality</h1>
+    <p>To test the mini representation feature:</p>
+    <ol>
+        <li>Open the main index.html file</li>
+        <li>Double-click any tile to enter its nested grid</li>
+        <li>Use the slider to set a grid size (e.g., 5x5)</li>
+        <li>Place some numbered tiles (0-10) in the nested grid</li>
+        <li>Click "Exit Tile" button</li>
+        <li>You should see a mini representation of the nested content in the parent tile</li>
+    </ol>
+    
+    <p><a href="index.html">Open Main Grid Application</a></p>
+    
+    <script>
+        // Simple test of canvas functionality
+        function testCanvas() {
+            const canvas = document.createElement('canvas');
+            canvas.width = 60;
+            canvas.height = 60;
+            const ctx = canvas.getContext('2d');
+            
+            // Test drawing
+            ctx.fillStyle = '#ff6b6b';
+            ctx.fillRect(10, 10, 20, 20);
+            ctx.fillStyle = '#4ecdc4';
+            ctx.fillRect(30, 30, 20, 20);
+            
+            const dataURL = canvas.toDataURL();
+            console.log('Canvas test successful, data URL length:', dataURL.length);
+            
+            // Create test image element
+            const img = document.createElement('img');
+            img.src = dataURL;
+            img.style.border = '1px solid black';
+            img.title = 'Test canvas output';
+            document.body.appendChild(img);
+        }
+        
+        // Run test when page loads
+        window.onload = testCanvas;
+    </script>
+</body>
+</html>

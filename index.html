@@ -175,6 +175,93 @@
             background-color: #000 !important;
             background-image: none !important;
         }
+
+        .tile.has-nested {
+            border: 2px solid #28a745;
+            position: relative;
+            box-shadow: 0 0 8px rgba(40, 167, 69, 0.3);
+        }
+        
+        .tile.has-nested::before {
+            content: '';
+            position: absolute;
+            top: -2px;
+            left: -2px;
+            right: -2px;
+            bottom: -2px;
+            border: 1px solid rgba(40, 167, 69, 0.5);
+            border-radius: 2px;
+            pointer-events: none;
+        }
+
+        .nested-indicator {
+            position: absolute;
+            top: 2px;
+            right: 2px;
+            font-size: 12px;
+            color: #28a745;
+            font-weight: bold;
+            background: rgba(255, 255, 255, 0.8);
+            border-radius: 50%;
+            width: 16px;
+            height: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        #level-indicator {
+            position: fixed;
+            top: 50%;
+            right: 10px;
+            transform: translateY(-50%);
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 10px;
+            border-radius: 5px;
+            font-family: monospace;
+            font-size: 12px;
+            z-index: 1001;
+        }
+        
+        #nested-controls {
+            position: fixed;
+            bottom: 10px;
+            right: 10px;
+            background: rgba(255, 255, 255, 0.95);
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 15px rgba(0, 0, 0, 0.2);
+            z-index: 1002;
+            display: none;
+            min-width: 200px;
+        }
+        
+        .nested-controls-content {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            align-items: center;
+        }
+        
+        #grid-size-slider {
+            width: 150px;
+            margin: 5px 0;
+        }
+        
+        #exit-tile-btn {
+            background: #dc3545;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        
+        #exit-tile-btn:hover {
+            background: #c82333;
+        }
     </style>
 </head>
 <body>
@@ -190,6 +277,11 @@
             <li>Ctrl+C to copy, Ctrl+V to paste tiles</li>
             <li>Drag to pan around the infinite grid</li>
             <li>Use scroll wheel to zoom in/out</li>
+            <li><strong>Double-click any tile to enter its nested grid</strong></li>
+            <li><strong>Use slider to change nested grid dimensions (2x2 to 20x20)</strong></li>
+            <li><strong>Create patterns inside nested tiles</strong></li>
+            <li><strong>Click "Exit Tile" to see scaled-down tile images of nested content</strong></li>
+            <li><strong>Empty tiles show as 0.png in mini representations</strong></li>
         </ul>
     </div>
 
@@ -209,6 +301,11 @@
         <!-- Toolbar tiles will be populated by JavaScript -->
     </div>
 
+    <div id="level-indicator">
+        Level: 0<br>
+        Path: Root
+    </div>
+
     <script>
         class InfiniteGrid {
             constructor() {
@@ -223,6 +320,12 @@
                 this.selectedTiles = new Set(); // For multi-selection
                 this.copiedTiles = []; // For copy/paste functionality
                 this.tileData = new Map(); // Store tile states
+                
+                // Hierarchical grid system
+                this.currentLevel = 0; // 0 = root level, 1+ = nested levels
+                this.levelStack = []; // Stack of parent coordinates when diving into nested grids
+                this.nestedGridData = new Map(); // Store nested grid data by path
+                this.currentGridSize = 10; // Current grid dimensions (10x10 default)
                 
                 this.viewportWidth = window.innerWidth;
                 this.viewportHeight = window.innerHeight;
@@ -297,7 +400,7 @@
                     this.updateGrid();
                 });
                 
-                // Scroll wheel for zooming
+                // Scroll wheel for zooming (normal zoom functionality only)
                 this.gridContainer.addEventListener('wheel', (e) => {
                     e.preventDefault();
                     
@@ -437,11 +540,22 @@
                 // Calculate current tile size based on zoom
                 const currentTileSize = this.baseTileSize * this.zoomLevel;
                 
-                // Calculate visible tile range
-                const startX = Math.floor(-this.offsetX / currentTileSize) - 2;
-                const endX = Math.floor((-this.offsetX + this.viewportWidth) / currentTileSize) + 2;
-                const startY = Math.floor(-this.offsetY / currentTileSize) - 2;
-                const endY = Math.floor((-this.offsetY + this.viewportHeight) / currentTileSize) + 2;
+                let startX, endX, startY, endY;
+                
+                if (this.currentLevel > 0) {
+                    // In nested mode, show grid based on currentGridSize
+                    const halfSize = Math.floor(this.currentGridSize / 2);
+                    startX = -halfSize;
+                    endX = halfSize;
+                    startY = -halfSize;
+                    endY = halfSize;
+                } else {
+                    // Calculate visible tile range for infinite grid
+                    startX = Math.floor(-this.offsetX / currentTileSize) - 2;
+                    endX = Math.floor((-this.offsetX + this.viewportWidth) / currentTileSize) + 2;
+                    startY = Math.floor(-this.offsetY / currentTileSize) - 2;
+                    endY = Math.floor((-this.offsetY + this.viewportHeight) / currentTileSize) + 2;
+                }
                 
                 // Clear existing tiles
                 this.grid.innerHTML = '';
@@ -483,14 +597,41 @@
                 tile.appendChild(label);
                 
                 // Apply saved tile data if exists
-                if (this.tileData.has(tileKey)) {
-                    const tileInfo = this.tileData.get(tileKey);
-                    if (tileInfo.number === -1) {
+                const currentPath = this.getCurrentPath();
+                const tileDataMap = this.getCurrentTileData();
+                
+                if (tileDataMap.has(tileKey)) {
+                    const tileInfo = tileDataMap.get(tileKey);
+                    
+                    if (tileInfo.miniRepresentation) {
+                        // Use mini representation as background
+                        tile.style.backgroundImage = `url(${tileInfo.miniRepresentation})`;
+                        tile.style.backgroundSize = 'cover';
+                        tile.style.backgroundPosition = 'center';
+                        tile.classList.add('has-nested');
+                        
+                        // Add nested indicator for mini representations
+                        const nestedIndicator = document.createElement('div');
+                        nestedIndicator.className = 'nested-indicator';
+                        nestedIndicator.textContent = '⊞';
+                        tile.appendChild(nestedIndicator);
+                        
+                        console.log(`Displaying mini representation for tile (${gridX}, ${gridY})`);
+                    } else if (tileInfo.number === -1) {
                         tile.classList.add('black-tile');
-                    } else {
+                    } else if (tileInfo.number !== null && tileInfo.number !== undefined) {
                         tile.style.backgroundImage = `url(tiles/${tileInfo.number}.png)`;
                         tile.style.backgroundSize = 'cover';
                         tile.style.backgroundPosition = 'center';
+                    }
+                } else {
+                    // Check if this tile has nested content (but no mini representation yet)
+                    if (this.hasNestedContent(gridX, gridY)) {
+                        tile.classList.add('has-nested');
+                        const nestedIndicator = document.createElement('div');
+                        nestedIndicator.className = 'nested-indicator';
+                        nestedIndicator.textContent = '⊞';
+                        tile.appendChild(nestedIndicator);
                     }
                 }
                 
@@ -499,7 +640,8 @@
                     tile.classList.add('selected');
                 }
                 
-                // Click event
+                // Click event - handle single click and double click
+                let clickTimeout;
                 tile.addEventListener('click', (e) => {
                     e.stopPropagation();
                     // Only process click if we haven't actually dragged
@@ -510,6 +652,16 @@
                             // Single click to edit
                             this.selectTile(tile);
                         }
+                    }
+                });
+                
+                // Double-click event to enter nested grid
+                tile.addEventListener('dblclick', (e) => {
+                    e.stopPropagation();
+                    if (!this.dragStarted) {
+                        const gridX = parseInt(tile.dataset.gridX);
+                        const gridY = parseInt(tile.dataset.gridY);
+                        this.enterNestedGrid(gridX, gridY);
                     }
                 });
                 
@@ -610,12 +762,19 @@
                     this.showInputField(this.activeTile, '-');
                 } else if (e.key === 'Backspace' || e.key === 'Delete') {
                     e.preventDefault();
-                    // Clear the tile
+                    // Clear the tile from current level
                     const tileKey = `${this.activeTile.dataset.gridX},${this.activeTile.dataset.gridY}`;
-                    this.tileData.delete(tileKey);
+                    const currentTileData = this.getCurrentTileData();
+                    currentTileData.delete(tileKey);
                     this.activeTile.classList.remove('black-tile');
+                    this.activeTile.classList.remove('has-nested');
                     this.activeTile.style.backgroundImage = '';
-                    console.log(`Cleared tile at position (${this.activeTile.dataset.gridX}, ${this.activeTile.dataset.gridY})`);
+                    
+                    // Remove nested indicator if present
+                    const indicator = this.activeTile.querySelector('.nested-indicator');
+                    if (indicator) indicator.remove();
+                    
+                    console.log(`Cleared tile at position (${this.activeTile.dataset.gridX}, ${this.activeTile.dataset.gridY}) on level ${this.currentLevel}`);
                 } else if (e.key === ' ' || e.key === 'Enter') {
                     e.preventDefault();
                     // Show input field for manual entry
@@ -661,18 +820,21 @@
                     minY = Math.min(minY, y);
                 });
                 
-                // Store relative positions and tile data
+                // Store relative positions and tile data from current level
+                const currentTileData = this.getCurrentTileData();
                 this.selectedTiles.forEach(tileKey => {
                     const [x, y] = tileKey.split(',').map(Number);
-                    const tileData = this.tileData.get(tileKey);
+                    const tileData = currentTileData.get(tileKey);
                     this.copiedTiles.push({
                         relativeX: x - minX,
                         relativeY: y - minY,
-                        number: tileData ? tileData.number : null
+                        number: tileData ? tileData.number : null,
+                        miniRepresentation: tileData ? tileData.miniRepresentation : null,
+                        hasNestedContent: tileData ? tileData.hasNestedContent : false
                     });
                 });
                 
-                console.log(`Copied ${this.copiedTiles.length} tiles`);
+                console.log(`Copied ${this.copiedTiles.length} tiles from level ${this.currentLevel}`);
             }
             
             pasteSelectedTiles() {
@@ -688,31 +850,48 @@
                 
                 const baseX = parseInt(this.activeTile.dataset.gridX);
                 const baseY = parseInt(this.activeTile.dataset.gridY);
+                const currentTileData = this.getCurrentTileData();
                 
                 // Apply copied pattern starting from the active tile
                 this.copiedTiles.forEach(copiedTile => {
-                    if (copiedTile.number !== null) {
+                    if (copiedTile.number !== null || copiedTile.miniRepresentation) {
                         const targetX = baseX + copiedTile.relativeX;
                         const targetY = baseY + copiedTile.relativeY;
                         const targetKey = `${targetX},${targetY}`;
                         
-                        // Save tile data
-                        this.tileData.set(targetKey, { number: copiedTile.number });
+                        // Save tile data to current level
+                        currentTileData.set(targetKey, { 
+                            number: copiedTile.number,
+                            miniRepresentation: copiedTile.miniRepresentation,
+                            hasNestedContent: copiedTile.hasNestedContent
+                        });
                         
                         // Update visible tile if it exists
                         if (this.visibleTiles.has(targetKey)) {
                             const targetTile = this.visibleTiles.get(targetKey);
-                            this.applyTileVisual(targetTile, copiedTile.number);
+                            if (copiedTile.miniRepresentation) {
+                                targetTile.style.backgroundImage = `url(${copiedTile.miniRepresentation})`;
+                                targetTile.style.backgroundSize = 'cover';
+                                targetTile.style.backgroundPosition = 'center';
+                                targetTile.classList.add('has-nested');
+                            } else if (copiedTile.number !== null) {
+                                this.applyTileVisual(targetTile, copiedTile.number);
+                            }
                         }
                     }
                 });
                 
-                console.log(`Pasted ${this.copiedTiles.length} tiles starting at (${baseX}, ${baseY})`);
+                console.log(`Pasted ${this.copiedTiles.length} tiles starting at (${baseX}, ${baseY}) on level ${this.currentLevel}`);
             }
             
             applyTileVisual(tile, number) {
                 // Remove any existing visual classes
                 tile.classList.remove('black-tile');
+                tile.classList.remove('has-nested');
+                
+                // Remove nested indicator if present
+                const indicator = tile.querySelector('.nested-indicator');
+                if (indicator) indicator.remove();
                 
                 if (number === -1) {
                     tile.classList.add('black-tile');
@@ -731,16 +910,302 @@
                     const gridY = parseInt(tile.dataset.gridY);
                     const tileKey = `${gridX},${gridY}`;
                     
-                    // Save tile data
-                    this.tileData.set(tileKey, { number: number });
+                    // Save tile data to current level (clear any mini representation)
+                    const tileDataMap = this.getCurrentTileData();
+                    tileDataMap.set(tileKey, { 
+                        number: number,
+                        miniRepresentation: null,
+                        hasNestedContent: false
+                    });
                     
                     // Apply visual changes
                     this.applyTileVisual(tile, number);
                     
-                    console.log(`Applied tile ${number} to position (${gridX}, ${gridY})`);
+                    console.log(`Applied tile ${number} to position (${gridX}, ${gridY}) at level ${this.currentLevel}`);
                 }
                 
                 this.deselectTile();
+            }
+            
+            getCurrentPath() {
+                return this.levelStack.join('/') || 'root';
+            }
+            
+            getCurrentTileData() {
+                const path = this.getCurrentPath();
+                if (!this.nestedGridData.has(path)) {
+                    this.nestedGridData.set(path, new Map());
+                }
+                return this.nestedGridData.get(path);
+            }
+            
+            hasNestedContent(gridX, gridY) {
+                const nestedPath = `${this.getCurrentPath()}/${gridX},${gridY}`;
+                const hasActualNested = this.nestedGridData.has(nestedPath) && this.nestedGridData.get(nestedPath).size > 0;
+                
+                // Also check if tile has mini representation
+                const tileKey = `${gridX},${gridY}`;
+                const currentTileData = this.getCurrentTileData();
+                const tileInfo = currentTileData.get(tileKey);
+                const hasMiniRep = tileInfo && (tileInfo.hasNestedContent || tileInfo.miniRepresentation);
+                
+                return hasActualNested || hasMiniRep;
+            }
+            
+            enterNestedGrid(tileX, tileY) {
+                // Add to level stack
+                this.levelStack.push(`${tileX},${tileY}`);
+                this.currentLevel++;
+                
+                // Reset zoom and position for the new level
+                this.zoomLevel = 1;
+                this.offsetX = this.viewportWidth / 2 - this.baseTileSize / 2;
+                this.offsetY = this.viewportHeight / 2 - this.baseTileSize / 2;
+                
+                console.log(`Entered nested grid at level ${this.currentLevel}, tile (${tileX}, ${tileY})`);
+                this.updateGrid();
+                this.updateLevelIndicator();
+                this.showNestedControls();
+            }
+            
+            exitNestedGrid() {
+                if (this.currentLevel === 0) return;
+                
+                // Get the current nested grid data before exiting
+                const currentPath = this.getCurrentPath();
+                const currentTileData = this.getCurrentTileData();
+                
+                // Pop from level stack to get parent tile coordinates
+                const parentTileCoords = this.levelStack.pop();
+                this.currentLevel--;
+                
+                // Generate mini representation of the nested grid
+                if (currentTileData.size > 0) {
+                    this.generateMiniRepresentation(parentTileCoords, currentTileData);
+                } else {
+                    // Even if there's no content, make sure the parent level is updated
+                    this.updateGrid();
+                }
+                
+                // Reset zoom and center grid
+                this.zoomLevel = 1;
+                this.centerGrid();
+                
+                console.log(`Exited to level ${this.currentLevel}`);
+                this.updateLevelIndicator();
+                
+                if (this.currentLevel === 0) {
+                    this.hideNestedControls();
+                }
+            }
+            
+            showNestedControls() {
+                // Create nested controls container if it doesn't exist
+                let nestedControls = document.getElementById('nested-controls');
+                if (!nestedControls) {
+                    nestedControls = document.createElement('div');
+                    nestedControls.id = 'nested-controls';
+                    nestedControls.innerHTML = `
+                        <div class="nested-controls-content">
+                            <label for="grid-size-slider">Grid Size: <span id="grid-size-value">${this.currentGridSize}x${this.currentGridSize}</span></label>
+                            <input type="range" id="grid-size-slider" min="2" max="20" value="${this.currentGridSize}">
+                            <button id="exit-tile-btn">Exit Tile</button>
+                        </div>
+                    `;
+                    document.body.appendChild(nestedControls);
+                    
+                    // Add event listeners
+                    const slider = document.getElementById('grid-size-slider');
+                    const sizeValue = document.getElementById('grid-size-value');
+                    const exitBtn = document.getElementById('exit-tile-btn');
+                    
+                    slider.addEventListener('input', (e) => {
+                        this.currentGridSize = parseInt(e.target.value);
+                        sizeValue.textContent = `${this.currentGridSize}x${this.currentGridSize}`;
+                        this.updateGrid(); // Refresh grid with new dimensions
+                    });
+                    
+                    exitBtn.addEventListener('click', () => {
+                        this.exitNestedGrid();
+                    });
+                }
+                nestedControls.style.display = 'block';
+            }
+            
+            hideNestedControls() {
+                const nestedControls = document.getElementById('nested-controls');
+                if (nestedControls) {
+                    nestedControls.style.display = 'none';
+                }
+            }
+            
+            generateMiniRepresentation(parentTileCoords, nestedData) {
+                // Calculate bounding box of all tiles in the nested grid (including empty ones)
+                let minX = Infinity, maxX = -Infinity;
+                let minY = Infinity, maxY = -Infinity;
+                
+                // Include all tiles in the current grid size, not just the ones with data
+                const halfSize = Math.floor(this.currentGridSize / 2);
+                minX = -halfSize;
+                maxX = halfSize;
+                minY = -halfSize;
+                maxY = halfSize;
+                
+                // Calculate dimensions
+                const width = maxX - minX + 1;
+                const height = maxY - minY + 1;
+                const maxDim = Math.max(width, height);
+                
+                console.log(`Creating mini representation: ${width}x${height} grid (${nestedData.size} non-empty tiles)`);
+                
+                // Create canvas for mini representation
+                const canvas = document.createElement('canvas');
+                const canvasSize = 58; // Slightly smaller than tile (60px) to leave border
+                canvas.width = canvasSize;
+                canvas.height = canvasSize;
+                const ctx = canvas.getContext('2d');
+                
+                // Fill background with light color
+                ctx.fillStyle = '#f8f9fa';
+                ctx.fillRect(0, 0, canvasSize, canvasSize);
+                
+                // Calculate cell size for mini grid (ensure minimum size of 2px)
+                const cellSize = Math.max(2, Math.floor((canvasSize - 4) / maxDim)); // Leave 2px margin on each side
+                const gridWidth = width * cellSize;
+                const gridHeight = height * cellSize;
+                const startX = (canvasSize - gridWidth) / 2;
+                const startY = (canvasSize - gridHeight) / 2;
+                
+                // Load and draw tile images
+                this.loadTileImagesForMini(canvas, ctx, nestedData, minX, maxX, minY, maxY, cellSize, startX, startY, parentTileCoords);
+            }
+            
+            loadTileImagesForMini(canvas, ctx, nestedData, minX, maxX, minY, maxY, cellSize, startX, startY, parentTileCoords) {
+                const imagesToLoad = new Map();
+                let loadedCount = 0;
+                let totalImages = 0;
+                
+                // Determine which images we need to load
+                for (let y = minY; y <= maxY; y++) {
+                    for (let x = minX; x <= maxX; x++) {
+                        const tileKey = `${x},${y}`;
+                        const tileInfo = nestedData.get(tileKey);
+                        
+                        // Use tile number if it exists, otherwise default to 0 (empty tile = 0.png)
+                        const tileNumber = (tileInfo && tileInfo.number !== null && tileInfo.number !== undefined) ? tileInfo.number : 0;
+                        
+                        if (!imagesToLoad.has(tileNumber)) {
+                            imagesToLoad.set(tileNumber, new Image());
+                            totalImages++;
+                        }
+                    }
+                }
+                
+                // Load all unique images
+                imagesToLoad.forEach((img, tileNumber) => {
+                    img.onload = () => {
+                        loadedCount++;
+                        if (loadedCount === totalImages) {
+                            this.drawMiniGrid(canvas, ctx, nestedData, minX, maxX, minY, maxY, cellSize, startX, startY, imagesToLoad, parentTileCoords);
+                        }
+                    };
+                    
+                    img.onerror = () => {
+                        console.warn(`Failed to load tile image: tiles/${tileNumber}.png`);
+                        loadedCount++;
+                        if (loadedCount === totalImages) {
+                            this.drawMiniGrid(canvas, ctx, nestedData, minX, maxX, minY, maxY, cellSize, startX, startY, imagesToLoad, parentTileCoords);
+                        }
+                    };
+                    
+                    img.src = `tiles/${tileNumber}.png`;
+                });
+            }
+            
+            drawMiniGrid(canvas, ctx, nestedData, minX, maxX, minY, maxY, cellSize, startX, startY, imagesToLoad, parentTileCoords) {
+                console.log(`Drawing mini grid: ${maxX - minX + 1}x${maxY - minY + 1}, cellSize: ${cellSize}`);
+                
+                // Draw each tile in the grid
+                for (let y = minY; y <= maxY; y++) {
+                    for (let x = minX; x <= maxX; x++) {
+                        const tileKey = `${x},${y}`;
+                        const tileInfo = nestedData.get(tileKey);
+                        
+                        // Use tile number if it exists, otherwise default to 0 (empty tile = 0.png)
+                        const tileNumber = (tileInfo && tileInfo.number !== null && tileInfo.number !== undefined) ? tileInfo.number : 0;
+                        
+                        const relativeX = x - minX;
+                        const relativeY = y - minY;
+                        
+                        const pixelX = startX + relativeX * cellSize;
+                        const pixelY = startY + relativeY * cellSize;
+                        
+                        // Draw the tile image if it loaded successfully
+                        const img = imagesToLoad.get(tileNumber);
+                        if (img && img.complete && img.naturalHeight !== 0) {
+                            ctx.drawImage(img, Math.floor(pixelX), Math.floor(pixelY), cellSize - 1, cellSize - 1);
+                        } else {
+                            // Fallback to color if image failed to load
+                            ctx.fillStyle = this.getTileColor(tileNumber);
+                            ctx.fillRect(Math.floor(pixelX), Math.floor(pixelY), cellSize - 1, cellSize - 1);
+                        }
+                        
+                        // Add subtle border for visibility
+                        ctx.strokeStyle = '#dee2e6';
+                        ctx.lineWidth = 0.25;
+                        ctx.strokeRect(Math.floor(pixelX), Math.floor(pixelY), cellSize - 1, cellSize - 1);
+                    }
+                }
+                
+                // Add a subtle border around the entire mini grid
+                ctx.strokeStyle = '#6c757d';
+                ctx.lineWidth = 1;
+                ctx.strokeRect(0, 0, canvas.width, canvas.height);
+                
+                // Convert canvas to data URL and apply to parent tile
+                const dataURL = canvas.toDataURL();
+                
+                // Store the mini representation in the PARENT level's tile data
+                const [parentX, parentY] = parentTileCoords.split(',').map(Number);
+                const parentKey = `${parentX},${parentY}`;
+                const parentTileData = this.getCurrentTileData(); // This is now the parent level since we already decremented
+                
+                // Set a special marker to indicate this tile has nested content with mini representation
+                parentTileData.set(parentKey, { 
+                    number: null, 
+                    miniRepresentation: dataURL,
+                    hasNestedContent: true 
+                });
+                
+                console.log(`Generated mini representation for tile (${parentX}, ${parentY}) at level ${this.currentLevel}, data URL length:`, dataURL.length);
+                
+                // Refresh the grid to show the new mini representation
+                this.updateGrid();
+            }
+            
+            getTileColor(number) {
+                // Return appropriate colors for different tile numbers
+                const colors = {
+                    '-1': '#000000',  // Black tile
+                    '0': '#ffffff',   // White
+                    '1': '#ff6b6b',   // Red
+                    '2': '#4ecdc4',   // Teal
+                    '3': '#45b7d1',   // Blue
+                    '4': '#96ceb4',   // Green
+                    '5': '#ffeaa7',   // Yellow
+                    '6': '#dda0dd',   // Plum
+                    '7': '#98d8c8',   // Mint
+                    '8': '#f7dc6f',   // Light yellow
+                    '9': '#bb8fce',   // Light purple
+                    '10': '#85c1e9'   // Light blue
+                };
+                return colors[number.toString()] || '#e9ecef'; // Default gray
+            }
+            
+            updateLevelIndicator() {
+                const indicator = document.getElementById('level-indicator');
+                const path = this.getCurrentPath();
+                indicator.innerHTML = `Level: ${this.currentLevel}<br>Path: ${path === 'root' ? 'Root' : path}`;
             }
             
             deselectTile() {
@@ -771,7 +1236,9 @@
                     zoomDisplay.style.marginTop = '5px';
                     document.getElementById('controls').appendChild(zoomDisplay);
                 }
-                zoomDisplay.textContent = `Zoom: ${Math.round(this.zoomLevel * 100)}%`;
+                const zoomText = `Zoom: ${Math.round(this.zoomLevel * 100)}%`;
+                const levelText = this.currentLevel > 0 ? ` (Level ${this.currentLevel})` : '';
+                zoomDisplay.textContent = zoomText + levelText;
             }
             
             resetZoom() {
@@ -781,10 +1248,16 @@
             
             reset() {
                 this.tileData.clear();
+                this.nestedGridData.clear();
                 this.selectedTiles.clear();
                 this.copiedTiles = [];
+                this.currentLevel = 0;
+                this.levelStack = [];
+                this.currentGridSize = 10;
                 this.zoomLevel = 1;
+                this.hideNestedControls();
                 this.updateGrid();
+                this.updateLevelIndicator();
             }
         }
         
@@ -807,6 +1280,9 @@
         
         // Initialize the grid
         const grid = new InfiniteGrid();
+        
+        // Initialize level indicator
+        grid.updateLevelIndicator();
         
         // Handle clicks outside tiles to deselect
         document.addEventListener('click', (e) => {
