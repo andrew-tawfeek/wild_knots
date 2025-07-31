@@ -1,0 +1,773 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Infinite Grid Tiles</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+            overflow: hidden;
+            background-color: #f0f0f0;
+        }
+
+        #grid-container {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+            overflow: auto;
+            cursor: grab;
+        }
+
+        #grid-container:active {
+            cursor: grabbing;
+        }
+
+        #grid {
+            position: absolute;
+            display: grid;
+            grid-template-columns: repeat(auto-fill, 60px);
+            grid-template-rows: repeat(auto-fill, 60px);
+            gap: 1px;
+            background-color: #ccc;
+            padding: 10px;
+        }
+
+        .tile {
+            width: 60px;
+            height: 60px;
+            background-color: white;
+            border: 1px solid #ddd;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            position: relative;
+            background-size: cover;
+            background-position: center;
+            transition: all 0.2s ease;
+        }
+
+        .tile:hover {
+            border-color: #007acc;
+            box-shadow: 0 0 5px rgba(0, 122, 204, 0.3);
+        }
+
+        .tile.active {
+            border-color: #007acc;
+            box-shadow: 0 0 10px rgba(0, 122, 204, 0.5);
+        }
+
+        .tile-input {
+            width: 100%;
+            height: 100%;
+            border: none;
+            background: transparent;
+            text-align: center;
+            font-size: 12px;
+            font-weight: bold;
+            outline: none;
+        }
+
+        .tile-number {
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            font-size: 10px;
+            color: #666;
+            background: rgba(255, 255, 255, 0.8);
+            padding: 1px 3px;
+            border-radius: 2px;
+        }
+
+        #controls {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            background: rgba(255, 255, 255, 0.9);
+            padding: 10px;
+            border-radius: 5px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            z-index: 1000;
+        }
+
+        #instructions {
+            position: fixed;
+            top: 10px;
+            left: 10px;
+            background: rgba(255, 255, 255, 0.9);
+            padding: 10px;
+            border-radius: 5px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            z-index: 1000;
+            max-width: 250px;
+        }
+
+        #tile-toolbar {
+            position: fixed;
+            bottom: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(255, 255, 255, 0.95);
+            padding: 10px;
+            border-radius: 8px;
+            box-shadow: 0 2px 15px rgba(0, 0, 0, 0.2);
+            z-index: 1000;
+            display: flex;
+            gap: 5px;
+            align-items: center;
+        }
+
+        .toolbar-tile {
+            width: 40px;
+            height: 40px;
+            border: 2px solid #ddd;
+            border-radius: 4px;
+            background-size: cover;
+            background-position: center;
+            background-color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            position: relative;
+        }
+
+        .toolbar-tile:hover {
+            border-color: #007acc;
+            transform: scale(1.1);
+            box-shadow: 0 2px 8px rgba(0, 122, 204, 0.3);
+        }
+
+        .toolbar-tile-number {
+            position: absolute;
+            bottom: -2px;
+            right: -2px;
+            background: #007acc;
+            color: white;
+            font-size: 10px;
+            font-weight: bold;
+            border-radius: 50%;
+            width: 16px;
+            height: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .toolbar-label {
+            font-size: 12px;
+            font-weight: bold;
+            color: #666;
+            margin-right: 8px;
+        }
+
+        .tile.selected {
+            border-color: #ff6b35;
+            box-shadow: 0 0 10px rgba(255, 107, 53, 0.6);
+            background-color: rgba(255, 107, 53, 0.1);
+        }
+
+        .tile.black-tile {
+            background-color: #000 !important;
+            background-image: none !important;
+        }
+    </style>
+</head>
+<body>
+    <div id="instructions">
+        <h3>Instructions:</h3>
+        <ul>
+            <li>Click any tile to edit it directly</li>
+            <li>Hold Shift + click to multi-select tiles</li>
+            <li>Enter a number 0-10 or click toolbar tiles</li>
+            <li>Enter -1 for black tiles</li>
+            <li>Ctrl+C to copy, Ctrl+V to paste tiles</li>
+            <li>Press Enter or click away to apply changes</li>
+            <li>Drag to pan around the infinite grid</li>
+            <li>Use scroll wheel to zoom in/out</li>
+        </ul>
+    </div>
+
+    <div id="controls">
+        <button onclick="resetGrid()">Reset Grid</button>
+        <button onclick="centerGrid()">Center View</button>
+        <button onclick="resetZoom()">Reset Zoom</button>
+        <button onclick="clearSelection()">Clear Selection</button>
+    </div>
+
+    <div id="grid-container">
+        <div id="grid"></div>
+    </div>
+
+    <div id="tile-toolbar">
+        <div class="toolbar-label">Tiles:</div>
+        <!-- Toolbar tiles will be populated by JavaScript -->
+    </div>
+
+    <script>
+        class InfiniteGrid {
+            constructor() {
+                this.gridContainer = document.getElementById('grid-container');
+                this.grid = document.getElementById('grid');
+                this.baseTileSize = 61; // Base tile size (60px + 1px gap)
+                this.zoomLevel = 1; // Current zoom level
+                this.minZoom = 0.2; // Minimum zoom level
+                this.maxZoom = 5; // Maximum zoom level
+                this.visibleTiles = new Map();
+                this.activeTile = null;
+                this.selectedTiles = new Set(); // For multi-selection
+                this.copiedTiles = []; // For copy/paste functionality
+                this.tileData = new Map(); // Store tile states
+                
+                this.viewportWidth = window.innerWidth;
+                this.viewportHeight = window.innerHeight;
+                
+                // Initial grid position
+                this.offsetX = 0;
+                this.offsetY = 0;
+                
+                this.isDragging = false;
+                this.lastMouseX = 0;
+                this.lastMouseY = 0;
+                
+                this.init();
+            }
+            
+            init() {
+                this.setupEventListeners();
+                this.createToolbar();
+                this.updateGrid();
+                this.centerGrid();
+            }
+            
+            setupEventListeners() {
+                // Mouse events for dragging
+                this.gridContainer.addEventListener('mousedown', (e) => {
+                    if (e.target === this.gridContainer || e.target === this.grid || e.target.classList.contains('tile')) {
+                        this.isDragging = true;
+                        this.lastMouseX = e.clientX;
+                        this.lastMouseY = e.clientY;
+                        this.gridContainer.style.cursor = 'grabbing';
+                        e.preventDefault();
+                    }
+                });
+                
+                document.addEventListener('mousemove', (e) => {
+                    if (this.isDragging) {
+                        const deltaX = e.clientX - this.lastMouseX;
+                        const deltaY = e.clientY - this.lastMouseY;
+                        
+                        this.offsetX += deltaX;
+                        this.offsetY += deltaY;
+                        
+                        this.updateGrid();
+                        
+                        this.lastMouseX = e.clientX;
+                        this.lastMouseY = e.clientY;
+                    }
+                });
+                
+                document.addEventListener('mouseup', () => {
+                    if (this.isDragging) {
+                        this.isDragging = false;
+                        this.gridContainer.style.cursor = 'grab';
+                    }
+                });
+                
+                // Window resize
+                window.addEventListener('resize', () => {
+                    this.viewportWidth = window.innerWidth;
+                    this.viewportHeight = window.innerHeight;
+                    this.updateGrid();
+                });
+                
+                // Scroll wheel for zooming
+                this.gridContainer.addEventListener('wheel', (e) => {
+                    e.preventDefault();
+                    
+                    const rect = this.gridContainer.getBoundingClientRect();
+                    const mouseX = e.clientX - rect.left;
+                    const mouseY = e.clientY - rect.top;
+                    
+                    // Calculate zoom factor
+                    const zoomFactor = e.deltaY > 0 ? 0.9 : 1.1;
+                    const newZoom = Math.max(this.minZoom, Math.min(this.maxZoom, this.zoomLevel * zoomFactor));
+                    
+                    if (newZoom !== this.zoomLevel) {
+                        // Calculate zoom point relative to current view
+                        const worldX = (mouseX - this.offsetX) / this.zoomLevel;
+                        const worldY = (mouseY - this.offsetY) / this.zoomLevel;
+                        
+                        // Update zoom level
+                        this.zoomLevel = newZoom;
+                        
+                        // Adjust offset to keep the zoom point centered
+                        this.offsetX = mouseX - worldX * this.zoomLevel;
+                        this.offsetY = mouseY - worldY * this.zoomLevel;
+                        
+                        this.updateGrid();
+                    }
+                });
+                
+                // Touch events for mobile support
+                let touchStartDistance = 0;
+                let touchStartZoom = 1;
+                
+                this.gridContainer.addEventListener('touchstart', (e) => {
+                    if (e.touches.length === 2) {
+                        // Two-finger pinch for zoom
+                        const touch1 = e.touches[0];
+                        const touch2 = e.touches[1];
+                        touchStartDistance = Math.hypot(
+                            touch2.clientX - touch1.clientX,
+                            touch2.clientY - touch1.clientY
+                        );
+                        touchStartZoom = this.zoomLevel;
+                    } else if (e.touches.length === 1) {
+                        // Single finger for drag
+                        this.isDragging = true;
+                        this.lastMouseX = e.touches[0].clientX;
+                        this.lastMouseY = e.touches[0].clientY;
+                    }
+                    e.preventDefault();
+                });
+                
+                this.gridContainer.addEventListener('touchmove', (e) => {
+                    if (e.touches.length === 2) {
+                        // Handle pinch zoom
+                        const touch1 = e.touches[0];
+                        const touch2 = e.touches[1];
+                        const currentDistance = Math.hypot(
+                            touch2.clientX - touch1.clientX,
+                            touch2.clientY - touch1.clientY
+                        );
+                        
+                        if (touchStartDistance > 0) {
+                            const scale = currentDistance / touchStartDistance;
+                            const newZoom = Math.max(this.minZoom, Math.min(this.maxZoom, touchStartZoom * scale));
+                            this.zoomLevel = newZoom;
+                            this.updateGrid();
+                        }
+                    } else if (e.touches.length === 1 && this.isDragging) {
+                        // Handle drag
+                        const deltaX = e.touches[0].clientX - this.lastMouseX;
+                        const deltaY = e.touches[0].clientY - this.lastMouseY;
+                        
+                        this.offsetX += deltaX;
+                        this.offsetY += deltaY;
+                        
+                        this.updateGrid();
+                        
+                        this.lastMouseX = e.touches[0].clientX;
+                        this.lastMouseY = e.touches[0].clientY;
+                    }
+                    e.preventDefault();
+                });
+                
+                this.gridContainer.addEventListener('touchend', (e) => {
+                    this.isDragging = false;
+                    touchStartDistance = 0;
+                    e.preventDefault();
+                });
+
+                // Keyboard events for copy/paste
+                document.addEventListener('keydown', (e) => {
+                    if (e.ctrlKey || e.metaKey) {
+                        if (e.key === 'c' || e.key === 'C') {
+                            e.preventDefault();
+                            this.copySelectedTiles();
+                        } else if (e.key === 'v' || e.key === 'V') {
+                            e.preventDefault();
+                            this.pasteSelectedTiles();
+                        }
+                    }
+                    
+                    if (e.key === 'Escape') {
+                        this.clearSelection();
+                        this.deselectTile();
+                    }
+                });
+            }
+            
+            createToolbar() {
+                const toolbar = document.getElementById('tile-toolbar');
+                
+                // Create tiles 0-10
+                for (let i = 0; i <= 10; i++) {
+                    const toolbarTile = document.createElement('div');
+                    toolbarTile.className = 'toolbar-tile';
+                    toolbarTile.style.backgroundImage = `url(tiles/${i}.png)`;
+                    toolbarTile.title = `Click to use tile ${i}`;
+                    
+                    // Add number label
+                    const numberLabel = document.createElement('div');
+                    numberLabel.className = 'toolbar-tile-number';
+                    numberLabel.textContent = i;
+                    toolbarTile.appendChild(numberLabel);
+                    
+                    // Click handler to apply tile to active tile
+                    toolbarTile.addEventListener('click', () => {
+                        if (this.activeTile) {
+                            this.applyTileNumber(this.activeTile, i.toString());
+                        }
+                    });
+                    
+                    toolbar.appendChild(toolbarTile);
+                }
+            }
+            
+            updateGrid() {
+                // Calculate current tile size based on zoom
+                const currentTileSize = this.baseTileSize * this.zoomLevel;
+                
+                // Calculate visible tile range
+                const startX = Math.floor(-this.offsetX / currentTileSize) - 2;
+                const endX = Math.floor((-this.offsetX + this.viewportWidth) / currentTileSize) + 2;
+                const startY = Math.floor(-this.offsetY / currentTileSize) - 2;
+                const endY = Math.floor((-this.offsetY + this.viewportHeight) / currentTileSize) + 2;
+                
+                // Clear existing tiles
+                this.grid.innerHTML = '';
+                this.visibleTiles.clear();
+                
+                // Set grid position
+                this.grid.style.left = this.offsetX + 'px';
+                this.grid.style.top = this.offsetY + 'px';
+                this.grid.style.transform = `scale(${this.zoomLevel})`;
+                this.grid.style.transformOrigin = '0 0';
+                
+                // Create visible tiles
+                for (let y = startY; y <= endY; y++) {
+                    for (let x = startX; x <= endX; x++) {
+                        this.createTile(x, y);
+                    }
+                }
+                
+                // Update zoom display
+                this.updateZoomDisplay();
+            }
+            
+            createTile(gridX, gridY) {
+                const tileKey = `${gridX},${gridY}`;
+                const tile = document.createElement('div');
+                tile.className = 'tile';
+                tile.dataset.gridX = gridX;
+                tile.dataset.gridY = gridY;
+                
+                // Position the tile
+                tile.style.position = 'absolute';
+                tile.style.left = (gridX * this.baseTileSize) + 'px';
+                tile.style.top = (gridY * this.baseTileSize) + 'px';
+                
+                // Add coordinate label
+                const label = document.createElement('div');
+                label.className = 'tile-number';
+                label.textContent = `${gridX},${gridY}`;
+                tile.appendChild(label);
+                
+                // Apply saved tile data if exists
+                if (this.tileData.has(tileKey)) {
+                    const tileInfo = this.tileData.get(tileKey);
+                    if (tileInfo.number === -1) {
+                        tile.classList.add('black-tile');
+                    } else {
+                        tile.style.backgroundImage = `url(tiles/${tileInfo.number}.png)`;
+                        tile.style.backgroundSize = 'cover';
+                        tile.style.backgroundPosition = 'center';
+                    }
+                }
+                
+                // Check if tile is selected
+                if (this.selectedTiles.has(tileKey)) {
+                    tile.classList.add('selected');
+                }
+                
+                // Click event
+                tile.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    if (!this.isDragging) {
+                        if (e.shiftKey) {
+                            this.toggleTileSelection(tile);
+                        } else {
+                            // Single click to edit
+                            this.selectTile(tile);
+                        }
+                    }
+                });
+                
+                this.grid.appendChild(tile);
+                this.visibleTiles.set(tileKey, tile);
+            }
+            
+            selectTile(tile) {
+                // Clear previous selections when not multi-selecting
+                this.clearSelection();
+                
+                // Remove active class from previous tile
+                if (this.activeTile) {
+                    this.activeTile.classList.remove('active');
+                    const input = this.activeTile.querySelector('.tile-input');
+                    if (input) {
+                        input.remove();
+                    }
+                }
+
+                // Set new active tile
+                this.activeTile = tile;
+                tile.classList.add('active');
+
+                // Create input field
+                const input = document.createElement('input');
+                input.className = 'tile-input';
+                input.type = 'text';
+                input.placeholder = '-1 to 10';
+                input.maxLength = 3;
+
+                // Input event handlers
+                input.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter') {
+                        this.applyTileNumber(tile, input.value);
+                    } else if (e.key === 'Escape') {
+                        this.deselectTile();
+                    }
+                });
+
+                input.addEventListener('blur', () => {
+                    // Submit the value when clicking away
+                    setTimeout(() => {
+                        if (input.value.trim() !== '') {
+                            this.applyTileNumber(tile, input.value);
+                        } else {
+                            this.deselectTile();
+                        }
+                    }, 100);
+                });
+
+                // Allow numbers including negative
+                input.addEventListener('input', (e) => {
+                    let value = e.target.value.replace(/[^0-9-]/g, '');
+                    
+                    // Ensure only one minus sign at the beginning
+                    const minusCount = (value.match(/-/g) || []).length;
+                    if (minusCount > 1) {
+                        value = value.replace(/-/g, '');
+                        if (e.target.value.startsWith('-')) {
+                            value = '-' + value;
+                        }
+                    }
+                    
+                    // Move minus to front if it exists
+                    if (value.includes('-') && !value.startsWith('-')) {
+                        value = '-' + value.replace('-', '');
+                    }
+                    
+                    const num = parseInt(value);
+                    if (value && !isNaN(num) && (num < -1 || num > 10)) {
+                        e.target.value = e.target.value.slice(0, -1);
+                    } else {
+                        e.target.value = value;
+                    }
+                });
+
+                tile.appendChild(input);
+                input.focus();
+            }
+            
+            toggleTileSelection(tile) {
+                const tileKey = `${tile.dataset.gridX},${tile.dataset.gridY}`;
+                
+                if (this.selectedTiles.has(tileKey)) {
+                    this.selectedTiles.delete(tileKey);
+                    tile.classList.remove('selected');
+                } else {
+                    this.selectedTiles.add(tileKey);
+                    tile.classList.add('selected');
+                }
+            }
+            
+            clearSelection() {
+                // Remove selected class from all visible tiles
+                this.selectedTiles.forEach(tileKey => {
+                    if (this.visibleTiles.has(tileKey)) {
+                        this.visibleTiles.get(tileKey).classList.remove('selected');
+                    }
+                });
+                this.selectedTiles.clear();
+            }
+            
+            copySelectedTiles() {
+                if (this.selectedTiles.size === 0) {
+                    console.log('No tiles selected to copy');
+                    return;
+                }
+                
+                this.copiedTiles = [];
+                let minX = Infinity, minY = Infinity;
+                
+                // Find the minimum coordinates to normalize the pattern
+                this.selectedTiles.forEach(tileKey => {
+                    const [x, y] = tileKey.split(',').map(Number);
+                    minX = Math.min(minX, x);
+                    minY = Math.min(minY, y);
+                });
+                
+                // Store relative positions and tile data
+                this.selectedTiles.forEach(tileKey => {
+                    const [x, y] = tileKey.split(',').map(Number);
+                    const tileData = this.tileData.get(tileKey);
+                    this.copiedTiles.push({
+                        relativeX: x - minX,
+                        relativeY: y - minY,
+                        number: tileData ? tileData.number : null
+                    });
+                });
+                
+                console.log(`Copied ${this.copiedTiles.length} tiles`);
+            }
+            
+            pasteSelectedTiles() {
+                if (this.copiedTiles.length === 0) {
+                    console.log('No tiles to paste');
+                    return;
+                }
+                
+                if (!this.activeTile) {
+                    console.log('No active tile selected for pasting');
+                    return;
+                }
+                
+                const baseX = parseInt(this.activeTile.dataset.gridX);
+                const baseY = parseInt(this.activeTile.dataset.gridY);
+                
+                // Apply copied pattern starting from the active tile
+                this.copiedTiles.forEach(copiedTile => {
+                    if (copiedTile.number !== null) {
+                        const targetX = baseX + copiedTile.relativeX;
+                        const targetY = baseY + copiedTile.relativeY;
+                        const targetKey = `${targetX},${targetY}`;
+                        
+                        // Save tile data
+                        this.tileData.set(targetKey, { number: copiedTile.number });
+                        
+                        // Update visible tile if it exists
+                        if (this.visibleTiles.has(targetKey)) {
+                            const targetTile = this.visibleTiles.get(targetKey);
+                            this.applyTileVisual(targetTile, copiedTile.number);
+                        }
+                    }
+                });
+                
+                console.log(`Pasted ${this.copiedTiles.length} tiles starting at (${baseX}, ${baseY})`);
+            }
+            
+            applyTileVisual(tile, number) {
+                // Remove any existing visual classes
+                tile.classList.remove('black-tile');
+                
+                if (number === -1) {
+                    tile.classList.add('black-tile');
+                    tile.style.backgroundImage = '';
+                } else {
+                    tile.style.backgroundImage = `url(tiles/${number}.png)`;
+                    tile.style.backgroundSize = 'cover';
+                    tile.style.backgroundPosition = 'center';
+                }
+            }
+            
+            applyTileNumber(tile, numberStr) {
+                const number = parseInt(numberStr);
+                if (!isNaN(number) && number >= -1 && number <= 10) {
+                    const gridX = parseInt(tile.dataset.gridX);
+                    const gridY = parseInt(tile.dataset.gridY);
+                    const tileKey = `${gridX},${gridY}`;
+                    
+                    // Save tile data
+                    this.tileData.set(tileKey, { number: number });
+                    
+                    // Apply visual changes
+                    this.applyTileVisual(tile, number);
+                    
+                    console.log(`Applied tile ${number} to position (${gridX}, ${gridY})`);
+                }
+                
+                this.deselectTile();
+            }
+            
+            deselectTile() {
+                if (this.activeTile) {
+                    this.activeTile.classList.remove('active');
+                    const input = this.activeTile.querySelector('.tile-input');
+                    if (input) {
+                        input.remove();
+                    }
+                    this.activeTile = null;
+                }
+            }
+            
+            centerGrid() {
+                this.offsetX = this.viewportWidth / 2 - (this.baseTileSize * this.zoomLevel) / 2;
+                this.offsetY = this.viewportHeight / 2 - (this.baseTileSize * this.zoomLevel) / 2;
+                this.updateGrid();
+            }
+            
+            updateZoomDisplay() {
+                // Update zoom indicator in controls
+                let zoomDisplay = document.getElementById('zoom-display');
+                if (!zoomDisplay) {
+                    zoomDisplay = document.createElement('div');
+                    zoomDisplay.id = 'zoom-display';
+                    zoomDisplay.style.fontSize = '12px';
+                    zoomDisplay.style.color = '#666';
+                    zoomDisplay.style.marginTop = '5px';
+                    document.getElementById('controls').appendChild(zoomDisplay);
+                }
+                zoomDisplay.textContent = `Zoom: ${Math.round(this.zoomLevel * 100)}%`;
+            }
+            
+            resetZoom() {
+                this.zoomLevel = 1;
+                this.updateGrid();
+            }
+            
+            reset() {
+                this.tileData.clear();
+                this.selectedTiles.clear();
+                this.copiedTiles = [];
+                this.zoomLevel = 1;
+                this.updateGrid();
+            }
+        }
+        
+        // Global functions for buttons
+        function resetGrid() {
+            grid.reset();
+        }
+        
+        function centerGrid() {
+            grid.centerGrid();
+        }
+        
+        function resetZoom() {
+            grid.resetZoom();
+        }
+        
+        function clearSelection() {
+            grid.clearSelection();
+        }
+        
+        // Initialize the grid
+        const grid = new InfiniteGrid();
+        
+        // Handle clicks outside tiles to deselect
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('.tile') && !e.target.closest('#controls') && !e.target.closest('#tile-toolbar')) {
+                grid.deselectTile();
+            }
+        });
+    </script>
+</body>
+</html>
