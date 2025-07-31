@@ -181,12 +181,13 @@
     <div id="instructions">
         <h3>Instructions:</h3>
         <ul>
-            <li>Click any tile to edit it directly</li>
+            <li>Click any tile to select it</li>
+            <li>Press 0-9 to set tile number directly</li>
+            <li>Press - then 1 for black tiles (-1)</li>
+            <li>Press Space/Enter for manual input</li>
+            <li>Press Backspace/Delete to clear tile</li>
             <li>Hold Shift + click to multi-select tiles</li>
-            <li>Enter a number 0-10 or click toolbar tiles</li>
-            <li>Enter -1 for black tiles</li>
             <li>Ctrl+C to copy, Ctrl+V to paste tiles</li>
-            <li>Press Enter or click away to apply changes</li>
             <li>Drag to pan around the infinite grid</li>
             <li>Use scroll wheel to zoom in/out</li>
         </ul>
@@ -231,8 +232,10 @@
                 this.offsetY = 0;
                 
                 this.isDragging = false;
+                this.dragStarted = false;
                 this.lastMouseX = 0;
                 this.lastMouseY = 0;
+                this.dragThreshold = 5; // Minimum distance to consider it a drag
                 
                 this.init();
             }
@@ -249,9 +252,9 @@
                 this.gridContainer.addEventListener('mousedown', (e) => {
                     if (e.target === this.gridContainer || e.target === this.grid || e.target.classList.contains('tile')) {
                         this.isDragging = true;
+                        this.dragStarted = false; // Only set to true when actual dragging occurs
                         this.lastMouseX = e.clientX;
                         this.lastMouseY = e.clientY;
-                        this.gridContainer.style.cursor = 'grabbing';
                         e.preventDefault();
                     }
                 });
@@ -260,11 +263,19 @@
                     if (this.isDragging) {
                         const deltaX = e.clientX - this.lastMouseX;
                         const deltaY = e.clientY - this.lastMouseY;
+                        const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
                         
-                        this.offsetX += deltaX;
-                        this.offsetY += deltaY;
+                        // Only start dragging if we've moved beyond the threshold
+                        if (!this.dragStarted && distance > this.dragThreshold) {
+                            this.dragStarted = true;
+                            this.gridContainer.style.cursor = 'grabbing';
+                        }
                         
-                        this.updateGrid();
+                        if (this.dragStarted) {
+                            this.offsetX += deltaX;
+                            this.offsetY += deltaY;
+                            this.updateGrid();
+                        }
                         
                         this.lastMouseX = e.clientX;
                         this.lastMouseY = e.clientY;
@@ -274,6 +285,7 @@
                 document.addEventListener('mouseup', () => {
                     if (this.isDragging) {
                         this.isDragging = false;
+                        this.dragStarted = false;
                         this.gridContainer.style.cursor = 'grab';
                     }
                 });
@@ -374,7 +386,7 @@
                     e.preventDefault();
                 });
 
-                // Keyboard events for copy/paste
+                // Keyboard events for copy/paste and number input
                 document.addEventListener('keydown', (e) => {
                     if (e.ctrlKey || e.metaKey) {
                         if (e.key === 'c' || e.key === 'C') {
@@ -384,11 +396,12 @@
                             e.preventDefault();
                             this.pasteSelectedTiles();
                         }
-                    }
-                    
-                    if (e.key === 'Escape') {
+                    } else if (e.key === 'Escape') {
                         this.clearSelection();
                         this.deselectTile();
+                    } else if (this.activeTile && !e.target.classList.contains('tile-input')) {
+                        // Handle direct number input when a tile is active
+                        this.handleDirectNumberInput(e);
                     }
                 });
             }
@@ -489,7 +502,8 @@
                 // Click event
                 tile.addEventListener('click', (e) => {
                     e.stopPropagation();
-                    if (!this.isDragging) {
+                    // Only process click if we haven't actually dragged
+                    if (!this.dragStarted) {
                         if (e.shiftKey) {
                             this.toggleTileSelection(tile);
                         } else {
@@ -519,13 +533,18 @@
                 // Set new active tile
                 this.activeTile = tile;
                 tile.classList.add('active');
-
-                // Create input field
+                
+                // Don't automatically create input field - wait for user action
+            }
+            
+            showInputField(tile, initialValue = '') {
+                // Create input field only when needed
                 const input = document.createElement('input');
                 input.className = 'tile-input';
                 input.type = 'text';
                 input.placeholder = '-1 to 10';
                 input.maxLength = 3;
+                input.value = initialValue;
 
                 // Input event handlers
                 input.addEventListener('keydown', (e) => {
@@ -575,6 +594,33 @@
 
                 tile.appendChild(input);
                 input.focus();
+                input.select(); // Select all text for easy replacement
+            }
+            
+            handleDirectNumberInput(e) {
+                if (!this.activeTile) return;
+                
+                // Handle direct number key presses
+                if (e.key >= '0' && e.key <= '9') {
+                    e.preventDefault();
+                    this.applyTileNumber(this.activeTile, e.key);
+                } else if (e.key === '-') {
+                    e.preventDefault();
+                    // Start input field with minus sign for -1
+                    this.showInputField(this.activeTile, '-');
+                } else if (e.key === 'Backspace' || e.key === 'Delete') {
+                    e.preventDefault();
+                    // Clear the tile
+                    const tileKey = `${this.activeTile.dataset.gridX},${this.activeTile.dataset.gridY}`;
+                    this.tileData.delete(tileKey);
+                    this.activeTile.classList.remove('black-tile');
+                    this.activeTile.style.backgroundImage = '';
+                    console.log(`Cleared tile at position (${this.activeTile.dataset.gridX}, ${this.activeTile.dataset.gridY})`);
+                } else if (e.key === ' ' || e.key === 'Enter') {
+                    e.preventDefault();
+                    // Show input field for manual entry
+                    this.showInputField(this.activeTile);
+                }
             }
             
             toggleTileSelection(tile) {
