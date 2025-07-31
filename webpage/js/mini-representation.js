@@ -21,29 +21,35 @@ InfiniteGrid.prototype.generateMiniRepresentation = function(parentTileCoords, n
     
     console.log(`Creating mini representation: ${width}x${height} grid (${nestedData.size} non-empty tiles)`);
     
-    // Create canvas for mini representation
+    // Create high-resolution canvas for mini representation
+    const scaleFactor = 4; // 4x resolution for high quality
+    const baseCanvasSize = 58; // Base size (slightly smaller than tile 60px to leave border)
     const canvas = document.createElement('canvas');
-    const canvasSize = 58; // Slightly smaller than tile (60px) to leave border
+    const canvasSize = baseCanvasSize * scaleFactor;
     canvas.width = canvasSize;
     canvas.height = canvasSize;
     const ctx = canvas.getContext('2d');
+    
+    // Enable high-quality image rendering
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = 'high';
     
     // Fill background with light color
     ctx.fillStyle = '#f8f9fa';
     ctx.fillRect(0, 0, canvasSize, canvasSize);
     
-    // Calculate cell size for mini grid (ensure minimum size of 2px)
-    const cellSize = Math.max(2, Math.floor((canvasSize - 4) / maxDim)); // Leave 2px margin on each side
+    // Calculate cell size for mini grid (ensure minimum size with high resolution)
+    const cellSize = Math.max(8, Math.floor((canvasSize - 16) / maxDim)); // Leave 8px margin (2px at base resolution)
     const gridWidth = width * cellSize;
     const gridHeight = height * cellSize;
     const startX = (canvasSize - gridWidth) / 2;
     const startY = (canvasSize - gridHeight) / 2;
     
-    // Load and draw tile images
-    this.loadTileImagesForMini(canvas, ctx, nestedData, minX, maxX, minY, maxY, cellSize, startX, startY, parentTileCoords);
+    // Load and draw tile images with high resolution
+    this.loadTileImagesForMini(canvas, ctx, nestedData, minX, maxX, minY, maxY, cellSize, startX, startY, parentTileCoords, scaleFactor, baseCanvasSize);
 };
 
-InfiniteGrid.prototype.loadTileImagesForMini = function(canvas, ctx, nestedData, minX, maxX, minY, maxY, cellSize, startX, startY, parentTileCoords) {
+InfiniteGrid.prototype.loadTileImagesForMini = function(canvas, ctx, nestedData, minX, maxX, minY, maxY, cellSize, startX, startY, parentTileCoords, scaleFactor, baseCanvasSize) {
     const imagesToLoad = new Map();
     let loadedCount = 0;
     let totalImages = 0;
@@ -69,7 +75,7 @@ InfiniteGrid.prototype.loadTileImagesForMini = function(canvas, ctx, nestedData,
         img.onload = () => {
             loadedCount++;
             if (loadedCount === totalImages) {
-                this.drawMiniGrid(canvas, ctx, nestedData, minX, maxX, minY, maxY, cellSize, startX, startY, imagesToLoad, parentTileCoords);
+                this.drawMiniGrid(canvas, ctx, nestedData, minX, maxX, minY, maxY, cellSize, startX, startY, imagesToLoad, parentTileCoords, scaleFactor, baseCanvasSize);
             }
         };
         
@@ -77,7 +83,7 @@ InfiniteGrid.prototype.loadTileImagesForMini = function(canvas, ctx, nestedData,
             console.warn(`Failed to load tile image: tiles/${tileNumber}.png`);
             loadedCount++;
             if (loadedCount === totalImages) {
-                this.drawMiniGrid(canvas, ctx, nestedData, minX, maxX, minY, maxY, cellSize, startX, startY, imagesToLoad, parentTileCoords);
+                this.drawMiniGrid(canvas, ctx, nestedData, minX, maxX, minY, maxY, cellSize, startX, startY, imagesToLoad, parentTileCoords, scaleFactor, baseCanvasSize);
             }
         };
         
@@ -85,8 +91,12 @@ InfiniteGrid.prototype.loadTileImagesForMini = function(canvas, ctx, nestedData,
     });
 };
 
-InfiniteGrid.prototype.drawMiniGrid = function(canvas, ctx, nestedData, minX, maxX, minY, maxY, cellSize, startX, startY, imagesToLoad, parentTileCoords) {
-    console.log(`Drawing mini grid: ${maxX - minX + 1}x${maxY - minY + 1}, cellSize: ${cellSize}`);
+InfiniteGrid.prototype.drawMiniGrid = function(canvas, ctx, nestedData, minX, maxX, minY, maxY, cellSize, startX, startY, imagesToLoad, parentTileCoords, scaleFactor, baseCanvasSize) {
+    console.log(`Drawing high-quality mini grid: ${maxX - minX + 1}x${maxY - minY + 1}, cellSize: ${cellSize}, scaleFactor: ${scaleFactor}`);
+    
+    // Set high-quality rendering context
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = 'high';
     
     // Draw each tile in the grid
     for (let y = minY; y <= maxY; y++) {
@@ -103,30 +113,31 @@ InfiniteGrid.prototype.drawMiniGrid = function(canvas, ctx, nestedData, minX, ma
             const pixelX = startX + relativeX * cellSize;
             const pixelY = startY + relativeY * cellSize;
             
-            // Draw the tile image if it loaded successfully
+            // Draw the tile image if it loaded successfully with high quality
             const img = imagesToLoad.get(tileNumber);
             if (img && img.complete && img.naturalHeight !== 0) {
-                ctx.drawImage(img, Math.floor(pixelX), Math.floor(pixelY), cellSize - 1, cellSize - 1);
+                // Use high-quality image scaling
+                ctx.drawImage(img, Math.floor(pixelX), Math.floor(pixelY), cellSize - scaleFactor, cellSize - scaleFactor);
             } else {
                 // Fallback to color if image failed to load
                 ctx.fillStyle = this.getTileColor(tileNumber);
-                ctx.fillRect(Math.floor(pixelX), Math.floor(pixelY), cellSize - 1, cellSize - 1);
+                ctx.fillRect(Math.floor(pixelX), Math.floor(pixelY), cellSize - scaleFactor, cellSize - scaleFactor);
             }
             
-            // Add subtle border for visibility
+            // Add subtle border for visibility (scaled up)
             ctx.strokeStyle = '#dee2e6';
-            ctx.lineWidth = 0.25;
-            ctx.strokeRect(Math.floor(pixelX), Math.floor(pixelY), cellSize - 1, cellSize - 1);
+            ctx.lineWidth = scaleFactor * 0.25;
+            ctx.strokeRect(Math.floor(pixelX), Math.floor(pixelY), cellSize - scaleFactor, cellSize - scaleFactor);
         }
     }
     
-    // Add a subtle border around the entire mini grid
+    // Add a border around the entire mini grid (scaled up)
     ctx.strokeStyle = '#6c757d';
-    ctx.lineWidth = 1;
+    ctx.lineWidth = scaleFactor;
     ctx.strokeRect(0, 0, canvas.width, canvas.height);
     
-    // Convert canvas to data URL and apply to parent tile
-    const dataURL = canvas.toDataURL();
+    // Convert canvas to high-quality PNG data URL
+    const dataURL = canvas.toDataURL('image/png', 1.0); // Maximum quality PNG
     
     // Store the mini representation in the PARENT level's tile data
     const [parentX, parentY] = parentTileCoords.split(',').map(Number);
@@ -140,7 +151,7 @@ InfiniteGrid.prototype.drawMiniGrid = function(canvas, ctx, nestedData, minX, ma
         hasNestedContent: true 
     });
     
-    console.log(`Generated mini representation for tile (${parentX}, ${parentY}) at level ${this.currentLevel}, data URL length:`, dataURL.length);
+    console.log(`Generated high-quality mini representation for tile (${parentX}, ${parentY}) at level ${this.currentLevel}, data URL length:`, dataURL.length);
     
     // Refresh the grid to show the new mini representation
     this.updateGrid();

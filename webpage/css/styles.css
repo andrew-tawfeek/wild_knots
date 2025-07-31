@@ -41,6 +41,8 @@ body {
     background-size: cover;
     background-position: center;
     transition: all 0.2s ease;
+    image-rendering: high-quality;
+    image-rendering: -webkit-optimize-contrast;
 }
 
 .tile:hover {
@@ -173,6 +175,8 @@ body {
     border: 2px solid #28a745;
     position: relative;
     box-shadow: 0 0 8px rgba(40, 167, 69, 0.3);
+    image-rendering: high-quality;
+    image-rendering: -webkit-optimize-contrast;
 }
 
 .tile.has-nested::before {
