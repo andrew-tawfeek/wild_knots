@@ -292,6 +292,69 @@ def opposite(direction):
     if direction == 'right':
         return 'left'
 
+
+# flip presents it as upside down, neccesary for longer tangles
+def tangleConstructor(value, flip = False): #perhaps just make this a class
+    if value == oo:
+        return Mosaic([[7]])
+    if value == 0:
+        return Mosaic([[8]])
+
+    def jordan_block_modified(eigenvalue, size, sparse=False, flip = False):
+        try:
+            size = ZZ(size)
+        except TypeError:
+            msg = "size of block needs to be an integer, not {0}"
+            raise TypeError(msg.format(size))
+        if size < 0:
+            msg = "size of block must be nonnegative, not {0}"
+            raise ValueError(msg.format(size))
+        block = diagonal_matrix([eigenvalue] * size, sparse=sparse)
+        if flip == True:
+            for i in range(size - 1):
+                block[i, i + 1] = 1
+            for i in range(size):
+                if i > 0:
+                    block[i, i - 1] = 3
+            return block
+        else:
+            for i in range(size - 1):
+                block[i, i + 1] = 4
+            for i in range(size):
+                if i > 0:
+                    block[i, i - 1] = 2
+            return block[::-1,:]
+
+    if value > 0:
+        return Mosaic(jordan_block_modified(10, value, flip = flip))
+    if value < 0:
+        return Mosaic(jordan_block_modified(9, -value, flip = flip))
+
+# takes in mosaics, TODO -- NEED TO ALLOW FULL LISTS LATER
+def tangleJoin(value1, value2):
+    #other one is transpose? need to write a mosaic "rotate/flip/refelect" method, maybe not now
+    #issue is upon reflecting, tiles need to be flipped to their correct orientation
+    #for now lets settle with a "flip" optional argument
+    def tangleConnector(n,m, direction):
+        assert direction in ['bottom-right', 'top-left']
+        if direction == 'bottom-right':
+            row = [6] + [0 for i in range(m-1)]
+            matrix_data = [row for i in range(n-1)] + [[4] + [0 for i in range(m-1)]]
+            return matrix(matrix_data)
+        elif direction == 'top-left':
+            row = [0 for i in range(m)]
+            matrix_data = [row for i in range(n-1)] + [[2] + [5 for i in range(m-1)]]
+            return matrix(matrix_data)
+
+    block = block_matrix([[tangleConnector(tangleConstructor(value1).size,tangleConstructor(value2).size, 'top-left'),tangleConstructor(value1).matrix()],[tangleConstructor(value2, flip = True).matrix(),tangleConnector(tangleConstructor(value2).size,tangleConstructor(value1).size, 'bottom-right')]])
+
+    return Mosaic(block)
+
+
+
+
+
+
 #class mosaics():
 #    def __init__(self):
         # Refer to graphs Sage package...
