@@ -346,7 +346,8 @@ def tangleJoin(value1, value2):
             matrix_data = [row for i in range(n-1)] + [[2] + [5 for i in range(m-1)]]
             return matrix(matrix_data)
 
-    block = block_matrix([[tangleConnector(tangleConstructor(value1).size,tangleConstructor(value2).size, 'top-left'),tangleConstructor(value1).matrix()],[tangleConstructor(value2, flip = True).matrix(),tangleConnector(tangleConstructor(value2).size,tangleConstructor(value1).size, 'bottom-right')]])
+    block = block_matrix([[tangleConnector(tangleConstructor(value2).size,tangleConstructor(value1).size, 'top-left'),tangleConstructor(value2).matrix()],
+                            [tangleConstructor(value1, flip = True).matrix(),tangleConnector(tangleConstructor(value1).size,tangleConstructor(value2).size, 'bottom-right')]])
 
     return Mosaic(block)
 
