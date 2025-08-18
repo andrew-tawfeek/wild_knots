@@ -271,6 +271,26 @@ class Mosaic():
         #TODO: This output is what's needed for compatibility with Links package in Sage
         # https://doc.sagemath.org/html/en/reference/knots/sage/knots/link.html
         pass
+
+    def flip(self):
+        # Flips the mosaic upside-down while maintaining tile connections
+        M = self.matrixRepresentation
+        flipped_matrix = M[::-1,:]
+        for i in range(self.size):
+            for j in range(self.size):
+                if flipped_matrix[i,j] == 1:
+                    flipped_matrix[i,j] = 4
+                elif flipped_matrix[i,j] == 2:
+                    flipped_matrix[i,j] = 3
+                elif flipped_matrix[i,j] == 3:
+                    flipped_matrix[i,j] = 2
+                elif flipped_matrix[i,j] == 4:
+                    flipped_matrix[i,j] = 1
+                elif flipped_matrix[i,j] == 7:
+                    flipped_matrix[i,j] = 8
+                elif flipped_matrix[i,j] == 8:
+                    flipped_matrix[i,j] = 7
+        return Mosaic(flipped_matrix)
         
 def random_mosaic(dimension):
     # This code is embarassing, but if it's stupid and it works it's not stupid.
@@ -347,7 +367,7 @@ def tangleJoin(value1, value2):
             return matrix(matrix_data)
 
     block = block_matrix([[tangleConnector(tangleConstructor(value2).size,tangleConstructor(value1).size, 'top-left'),tangleConstructor(value2).matrix()],
-                            [tangleConstructor(value1, flip = True).matrix(),tangleConnector(tangleConstructor(value1).size,tangleConstructor(value2).size, 'bottom-right')]])
+                        [tangleConstructor(value1, flip = True).matrix(),tangleConnector(tangleConstructor(value1).size,tangleConstructor(value2).size, 'bottom-right')]])
 
     return Mosaic(block)
 
