@@ -275,8 +275,8 @@ class Mosaic():
     def flip(self):
         # Flips the mosaic upside-down while maintaining tile connections
         M = self.matrixRepresentation
-        flipped_matrix = M[::-1,:]
-        for i in range(self.size):
+        flipped_matrix = M[::-1,:] # flips entire matrix upside down
+        for i in range(self.size): # all this fixes the fact that tiles need to be interchanged with their upside-down counterparts
             for j in range(self.size):
                 if flipped_matrix[i,j] == 1:
                     flipped_matrix[i,j] = 4
