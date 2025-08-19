@@ -351,11 +351,15 @@ def tangleConstructor(value, flip = False): #perhaps just make this a class
         return Mosaic(jordan_block_modified(9, -value, flip = flip))
 
 # takes in mosaics, TODO -- NEED TO ALLOW FULL LISTS LATER
-def tangleJoin(value1, value2):
+def tangleJoin(tangle_list):
     #other one is transpose? need to write a mosaic "rotate/flip/refelect" method, maybe not now
     #issue is upon reflecting, tiles need to be flipped to their correct orientation
     #for now lets settle with a "flip" optional argument
-    def tangleConnector(n,m, direction):
+
+    assert len(tangle_list) == 2 # only two tangles can be joined at the moment
+
+
+    def tangleConnector(n,m, direction): # need to generalize for arb. dimension and specificying what connects where
         assert direction in ['bottom-right', 'top-left']
         if direction == 'bottom-right':
             row = [6] + [0 for i in range(m-1)]
@@ -366,8 +370,11 @@ def tangleJoin(value1, value2):
             matrix_data = [row for i in range(n-1)] + [[2] + [5 for i in range(m-1)]]
             return matrix(matrix_data)
 
-    block = block_matrix([[tangleConnector(tangleConstructor(value2).size,tangleConstructor(value1).size, 'top-left'),tangleConstructor(value2).matrix()],
-                        [tangleConstructor(value1, flip = True).matrix(),tangleConnector(tangleConstructor(value1).size,tangleConstructor(value2).size, 'bottom-right')]])
+    inner_tangle = tangleConstructor(tangle_list[0])
+     
+    for i in range(len(tangle_list)):
+        block = block_matrix([[tangleConnector(tangleConstructor(tangle_list[1]).size,tangleConstructor(tangle_list[0]).size, 'top-left'),tangleConstructor(tangle_list[1]).matrix()],
+                            [tangleConstructor(tangle_list[0], flip = True).matrix(),tangleConnector(tangleConstructor(tangle_list[0]).size,tangleConstructor(tangle_list[1]).size, 'bottom-right')]])
 
     return Mosaic(block)
 
