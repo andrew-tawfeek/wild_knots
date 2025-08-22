@@ -176,8 +176,7 @@ class Mosaic():
             return directions_dict
         else:
             return list(directions_dict.values())
-        
-    
+
     def walk(self, crossing, direction, pathList = False, tangent = False):
         #assert #NEED TO ENSURE NO HYPERBOLIC TILES
         # Given a crossing and direction (up/down/left/right), returns crossing reached and orientation demanded
@@ -350,6 +349,40 @@ def tangleConstructor(value, flip = False): #perhaps just make this a class
     if value < 0:
         return Mosaic(jordan_block_modified(9, -value, flip = flip))
 
+
+
+# Unfinished        
+#def generalizedConnector(dim1, dim2, endpoint1, endpoint2, boundary1, boundary2):
+    # Creates a connecting strand from endpoint1 to endpoint2 contained in a dim1 x dim2 mosaic
+    # Endpoints need to be a tuple on the boundary of the mosaic
+#    assert boundary1 in ['top','bottom','left','right']
+#    assert boundary2 in ['top','bottom','left','right']
+
+#    template = matrix(ZZ,dim1,dim2)
+    
+    # it is irrelevant where you begin
+#    y1,x1 = endpoint1
+#    y2,x2 = endpoint2
+
+#    if y1 == y2:
+#        for x in range(min(x1,x2), max(x1,x2)+1):
+#            template[y1,x] = 5 # horizontal strand
+    
+#    elif y1 < y2:
+#        #the first tile is higher than the second in the mosaic
+#            template[y1,x1] = 1 # down right
+
+
+#    if x1 == x2:
+#        for y in range(min(y1,y2), max(y1,y2)+1):
+#           template[y,x1] = 6 # vertical strand
+
+  
+
+#    return Mosaic(template)
+
+
+
 # takes in mosaics, TODO -- NEED TO ALLOW FULL LISTS LATER
 def tangleJoin(tangle_list):
     #other one is transpose? need to write a mosaic "rotate/flip/refelect" method, maybe not now
@@ -379,6 +412,16 @@ def tangleJoin(tangle_list):
     return Mosaic(block)
 
 
+
+
+
+
+
+#Were this to be implemented into a GNN...
+
+#Nodes = mosaic tiles (with tile type as features)
+#Edges = connections between adjacent tiles
+#Graph structure captures the topological information
 
 
 
