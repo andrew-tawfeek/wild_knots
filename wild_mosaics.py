@@ -266,6 +266,14 @@ class Mosaic():
         # WARNING: does this tell you when two knots are linked? what does this do for hopf?
         # Perhaps could be used primarily for orienting, i.e. Sage Links compatibility
 
+    def numComponents(self):
+        assert self.isSuitablyConnected() == True #knot has to be connected up
+        # TODO: it does a full walk, checks off each crossing that appears, and etc.
+
+
+
+        pass
+
     def planarDiagramCode(self):
         #TODO: This output is what's needed for compatibility with Links package in Sage
         # https://doc.sagemath.org/html/en/reference/knots/sage/knots/link.html
@@ -290,8 +298,61 @@ class Mosaic():
                 elif flipped_matrix[i,j] == 8:
                     flipped_matrix[i,j] = 7
         return Mosaic(flipped_matrix)
+
+    def potential_tiles(self, i, j):
+    # outputs a LIST of potential tile insertions based on the up-down/left-right open connections
+    # around the (i,j)th tile
+
+        necessary_connections = []
         
+        top_boundary = False
+        bottom_boundary = False
+        left_boundary = False
+        right_boundary = False
+
+        #above
+        if i == 0: # above is boundary
+            top_boundary = True # it isn't allowed to go up in this case
+        elif 'down' in self.directions(i-1, j): # if the tile above contains a downward connection, (i,j) goes up
+            necessary_connections += ['up']
+
+        if i == self.size-1: #below is the mosaic boundary
+            bottom_boundary = True
+        elif 'up' in self.directions(i+1, j): # if the tile below contains an upward connection
+            necessary_connections += ['down']
+
+        if j == 0: # left is boundary
+            left_boundary = True
+        elif 'right' in self.directions(i, j-1):
+            necessary_connections += ['left']
+
+        if j == self.size-1: # right is boundary
+            right_boundary = True
+        elif 'left' in self.directions(i, j+1): 
+            necessary_connections += ['right']
+        
+        #return necessary_connections
+        tile_set =  [tile_num for tile_num in range(0,10) if set(necessary_connections).issubset(set(Tile(tile_num).connectionDirections))]
+
+        if top_boundary == True:
+            tile_set = [tile for tile in tile_set if tile != 3 and tile != 4 and tile != 6 and tile != 7 and tile != 8 and tile != 9 and tile != 10] #removes tiles that go up
+
+        if bottom_boundary == True:
+            tile_set = [tile for tile in tile_set if tile != 1 and tile != 2 and tile != 6 and tile != 7 and tile != 8 and tile != 9 and tile != 10]
+
+        if left_boundary == True:
+            tile_set = [tile for tile in tile_set if tile != 1 and tile != 4 and tile != 5 and tile != 7 and tile != 8 and tile != 9 and tile != 10]
+        
+        if right_boundary == True:
+            tile_set = [tile for tile in tile_set if tile != 2 and tile != 3 and tile != 5 and tile != 7 and tile != 8 and tile != 9 and tile != 10]
+        
+        return tile_set
+
+
 def random_mosaic(dimension):
+    template = matrix(ZZ,dimension,dimension)
+
+
     # This code is embarassing, but if it's stupid and it works it's not stupid.
     # Good luck ever getting this to work for high dimension! Technically, you need luck. Like, a lot of it.
     connect_check = False
@@ -299,6 +360,13 @@ def random_mosaic(dimension):
         M = Mosaic(random_matrix(GF(11),dimension,dimension))
         connect_check = M.isSuitablyConnected()
     return M
+
+
+
+
+
+
+
 
 def opposite(direction):
     assert direction in ['up','down','left','right']
@@ -312,6 +380,12 @@ def opposite(direction):
         return 'left'
 
 
+
+
+
+
+
+    
 # flip presents it as upside down, neccesary for longer tangles
 def tangleConstructor(value, flip = False): #perhaps just make this a class
     if value == oo:
@@ -351,6 +425,11 @@ def tangleConstructor(value, flip = False): #perhaps just make this a class
 
 
 
+
+
+
+
+    
 # Unfinished        
 #def generalizedConnector(dim1, dim2, endpoint1, endpoint2, boundary1, boundary2):
     # Creates a connecting strand from endpoint1 to endpoint2 contained in a dim1 x dim2 mosaic
@@ -383,6 +462,11 @@ def tangleConstructor(value, flip = False): #perhaps just make this a class
 
 
 
+
+
+
+
+    
 # takes in mosaics, TODO -- NEED TO ALLOW FULL LISTS LATER
 def tangleJoin(tangle_list):
     #other one is transpose? need to write a mosaic "rotate/flip/refelect" method, maybe not now
