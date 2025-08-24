@@ -310,6 +310,8 @@ class Mosaic():
         left_boundary = False
         right_boundary = False
 
+        boundary_tile = False
+
         #above
         if i == 0: # above is boundary
             top_boundary = True # it isn't allowed to go up in this case
@@ -346,6 +348,13 @@ class Mosaic():
         if right_boundary == True:
             tile_set = [tile for tile in tile_set if tile != 2 and tile != 3 and tile != 5 and tile != 7 and tile != 8 and tile != 9 and tile != 10]
         
+        
+        if top_boundary == True or bottom_boundary == True or left_boundary == True or right_boundary == True:
+            boundary_tile = True
+
+        if necessary_connections == [] and boundary_tile == False:
+            tile_set = [0]
+
         return tile_set
 
 
