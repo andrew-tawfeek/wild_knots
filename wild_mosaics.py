@@ -342,7 +342,7 @@ class Mosaic():
             necessary_connections += ['right']
         
         #return necessary_connections
-        tile_set =  [tile_num for tile_num in range(0,10) if set(necessary_connections).issubset(set(Tile(tile_num).connectionDirections))]
+        tile_set =  [tile_num for tile_num in range(0,11) if set(necessary_connections).issubset(set(Tile(tile_num).connectionDirections))]
 
         if top_boundary == True:
             tile_set = [tile for tile in tile_set if tile != 3 and tile != 4 and tile != 6 and tile != 7 and tile != 8 and tile != 9 and tile != 10] #removes tiles that go up
@@ -364,6 +364,7 @@ class Mosaic():
 
         return tile_set
 
+import random
 
 def random_mosaic(dimension):
     template = matrix(ZZ,dimension,dimension)
