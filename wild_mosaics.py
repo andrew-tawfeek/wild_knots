@@ -315,8 +315,12 @@ class Mosaic():
         #above
         if i == 0: # above is boundary
             top_boundary = True # it isn't allowed to go up in this case
+        elif self.directions(i-1, j) == []: # if the tile above is a blank tile, (i,j) cannot go up
+            top_boundary = True
         elif 'down' in self.directions(i-1, j): # if the tile above contains a downward connection, (i,j) goes up
             necessary_connections += ['up']
+        else:
+            top_boundary = True
 
         if i == self.size-1: #below is the mosaic boundary
             bottom_boundary = True
@@ -327,6 +331,10 @@ class Mosaic():
             left_boundary = True
         elif 'right' in self.directions(i, j-1):
             necessary_connections += ['left']
+        elif self.directions(i, j-1) == []: # if the tile to the left is a blank tile, (i,j) cannot go left
+            left_boundary = True
+        else:
+            left_boundary = True
 
         if j == self.size-1: # right is boundary
             right_boundary = True
@@ -348,7 +356,6 @@ class Mosaic():
         if right_boundary == True:
             tile_set = [tile for tile in tile_set if tile != 2 and tile != 3 and tile != 5 and tile != 7 and tile != 8 and tile != 9 and tile != 10]
         
-        
         if top_boundary == True or bottom_boundary == True or left_boundary == True or right_boundary == True:
             boundary_tile = True
 
@@ -361,14 +368,19 @@ class Mosaic():
 def random_mosaic(dimension):
     template = matrix(ZZ,dimension,dimension)
 
+    for i in range(dimension):
+        for j in range(dimension):
+            template[i,j] = choice(Mosaic(template).potential_tiles(i,j))
+    return Mosaic(template)
+
 
     # This code is embarassing, but if it's stupid and it works it's not stupid.
     # Good luck ever getting this to work for high dimension! Technically, you need luck. Like, a lot of it.
-    connect_check = False
-    while connect_check == False:
-        M = Mosaic(random_matrix(GF(11),dimension,dimension))
-        connect_check = M.isSuitablyConnected()
-    return M
+#    connect_check = False
+#    while connect_check == False:
+#        M = Mosaic(random_matrix(GF(11),dimension,dimension))
+#        connect_check = M.isSuitablyConnected()
+#    return M
 
 
 
