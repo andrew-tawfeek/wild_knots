@@ -366,13 +366,28 @@ class Mosaic():
 
 import random
 
-def random_mosaic(dimension):
-    template = matrix(ZZ,dimension,dimension)
+def random_mosaic(dimension, suitably_connected = True, num_crossings = -1):
+    if num_crossings != -1:
+        M = random_mosaic(dimension, suitably_connected = suitably_connected)
+        while len(M.findCrossings()) != num_crossings:
+            M = random_mosaic(dimension, suitably_connected = suitably_connected)
+        return M
 
-    for i in range(dimension):
-        for j in range(dimension):
-            template[i,j] = choice(Mosaic(template).potential_tiles(i,j))
-    return Mosaic(template)
+    if suitably_connected == False: # I have no clue why you would want this, but here you go
+        return Mosaic(random_matrix(GF(11),dimension,dimension))
+
+    elif suitably_connected == True:
+        template = matrix(ZZ,dimension,dimension)
+        for i in range(dimension):
+            for j in range(dimension):
+                template[i,j] = choice(Mosaic(template).potential_tiles(i,j))
+        return Mosaic(template)
+
+
+
+
+
+
 
 
     # This code is embarassing, but if it's stupid and it works it's not stupid.
