@@ -51,7 +51,7 @@ class Tile():
         # e.g. Tile(6).isGoing('up') returns True but Tile(6).isGoing('left') returns False
         # This is good for checking suitable connectivity later
         return direction in self.connectionDirections
-    def zoom(self):
+    def zoom(self, onlyUpDown = False):
         # Every tile becomes 3x3 matrix
         # TODO: Later, iterate this with an input "amount"
         N = self.tile
@@ -74,6 +74,8 @@ class Tile():
         if (N==8):
             return [[2,4,0],[4,0,2],[0,2,4]]
         if (N==9):
+            if onlyUpDown == True: # twists to center a 10-tile instead
+                return [[2,8,1],[7,10,7],[3,8,4]]
             return [[0,6,0],[5,9,5],[0,6,0]]
         if (N==10):
             return [[0,6,0],[5,10,5],[0,6,0]]
@@ -128,11 +130,13 @@ class Mosaic():
                     elif not Tile(M[i+1][j]).isGoing('up'):
                         return False
         return True
-    def zoom(self):
+
+    # If onlyUpDown = True, then all 9 tiles are replaced by twisted 10 tiles (isotopy equivalent)
+    def zoom(self, onlyUpDown = False):
         # Zooms by 3x, replaces each tile by a 3x3 isotopy equivalent tile
         # Usage is W.zoom() fro W = Mosaic(M)
         M = self.matrixRepresentation
-        M_tensored = [[Tile(x).zoom() for x in row] for row in [list(x) for x in list(M)]]
+        M_tensored = [[Tile(x).zoom(onlyUpDown) for x in row] for row in [list(x) for x in list(M)]]
         A = [] # The below code unwraps inner 3x3 subtiles
         for n in range(len(M_tensored)*3):
             A = A + [[x[n%3] for x in M_tensored[floor(n/3)]]] #Euclidean division, n = floor(n/3)*3 + n%3
@@ -269,6 +273,7 @@ class Mosaic():
     def numComponents(self):
         assert self.isSuitablyConnected() == True #knot has to be connected up
         # TODO: it does a full walk, checks off each crossing that appears, and etc.
+        # This is not sufficient -- e.g. things that don't have crossings
 
 
 
